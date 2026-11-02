@@ -1,0 +1,17 @@
+{
+  "name": "Spoany Studio",
+  "short_name": "Spoany",
+  "description": "스포애니 신중동점 홍보물 제작 — Spoany Pulse 디자인 시스템",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111114",
+  "theme_color": "#111114",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
