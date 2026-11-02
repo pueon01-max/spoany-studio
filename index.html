@@ -70,7 +70,7 @@ details[open] summary::after{content:"－"}
 .fields label{display:flex;flex-direction:column;gap:5px;font:600 11.5px/1 var(--ui);color:var(--muted)}
 .fields .hint{font-weight:500;font-size:11px;color:var(--muted);opacity:.85}
 .stage{display:flex;flex-direction:column;gap:16px;min-width:0;position:sticky;top:env(safe-area-inset-top,0px)}
-@media (max-width:900px){.stage{position:static}}
+@media (max-width:900px){.stage{position:static;order:-1}}
 .viewer{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
 .vhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .vhead h2{margin:0;font:700 16px/1.2 var(--ui);letter-spacing:-.02em}
@@ -87,6 +87,62 @@ details[open] summary::after{content:"－"}
 .thumb small{font-weight:500;color:var(--muted)}
 .note{font-size:12px;color:var(--muted);line-height:1.5}
 #exp{position:fixed;left:-30000px;top:0}
+.tabs{display:flex;gap:4px;background:var(--field);border:1px solid var(--line);border-radius:14px;padding:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:3}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);border-radius:10px;padding:10px 6px;font:600 13px/1 var(--ui);cursor:pointer;position:relative}
+.tabs button[aria-selected=true]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tabs button.dot::after{content:"";position:absolute;top:7px;right:10px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.tabpanel{display:flex;flex-direction:column;gap:16px;min-width:0}
+.edhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.edhead b{display:block;font:700 16px/1.2 var(--ui);letter-spacing:-.02em}
+.edhead small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.edhead .chk{font-size:12px;white-space:nowrap}
+#fields{display:flex;flex-direction:column;gap:14px}
+.grp{border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:14px}
+.grp h4{margin:0;font:600 11px/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink)}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fl{font:600 13px/1.2 var(--ui);color:var(--ink)}
+.fh{margin:0;font-size:11.5px;line-height:1.4;color:var(--muted)}
+.item{border:1px solid var(--line);background:var(--field);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.item.hi{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.item input,.qrow input,.qrow textarea,.chipin{background:var(--panel)}
+.ihead{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g2.vu{grid-template-columns:2fr 1fr}
+.g3{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:8px}
+@media (max-width:420px){.g3{grid-template-columns:1fr 1fr}.g3 input:first-child{grid-column:1/-1}}
+input.big{font-weight:700;font-size:16px}
+.unitlab{align-self:center;color:var(--muted);font-size:13px}
+.add{border:1px dashed var(--line);background:transparent;color:var(--accent-ink);border-radius:12px;padding:10px;font:600 13px/1 var(--ui);cursor:pointer}
+.add:hover{border-color:var(--accent)}
+.mini{width:36px;height:38px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;font:600 16px/1 var(--ui);cursor:pointer;flex:none}
+.step{display:flex;gap:6px;align-items:center;max-width:180px}
+.step input{text-align:center}
+.pin{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:5px 10px;font:600 11.5px/1 var(--ui);cursor:pointer}
+.pin[aria-pressed=true]{border-color:var(--accent);color:var(--accent-ink);background:var(--soft)}
+.qrow{display:flex;gap:6px;align-items:flex-start}
+.qrow .x{padding-top:10px;text-decoration:none}
+.stars{display:flex;align-items:center;gap:2px}
+.stars button{border:0;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:var(--line);padding:2px}
+.stars button[aria-pressed=true]{color:var(--accent)}
+.stars span{margin-left:8px;font-weight:600}
+.rng{display:flex;flex-direction:column;gap:4px;font:600 12px/1 var(--ui);color:var(--muted)}
+.rng output{color:var(--ink)}
+.rng input{accent-color:var(--accent);width:100%}
+.chipbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--field)}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 11px;font:500 12.5px/1 var(--ui)}
+.chip.first{border-color:var(--accent);color:var(--accent-ink);background:var(--soft)}
+.chip button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 4px}
+.chipin{flex:1;min-width:110px;border:0!important;background:transparent!important;padding:6px!important}
+.mus{display:flex;flex-wrap:wrap;gap:6px}
+.mus button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 13px/1 var(--ui);cursor:pointer}
+.mus button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .seg{flex:0 1 auto}
+.toolbar .seg button{padding:7px 10px;font-size:12px}
+.striphead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.striphead .seg button{padding:6px 10px;font-size:12px}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ================= POSTER (Spoany Pulse tokens, fixed) ================= */
@@ -168,7 +224,13 @@ details[open] summary::after{content:"－"}
 
   <div class="grid">
     <aside class="panel" aria-label="제작 패널">
-      <form class="sec" id="askForm">
+      <div class="tabs" role="tablist" aria-label="제작 단계">
+        <button type="button" role="tab" data-tab="ai" aria-selected="false" aria-controls="tab-ai" tabindex="-1">AI 제작</button>
+        <button type="button" role="tab" data-tab="edit" aria-selected="true" aria-controls="tab-edit">내용 편집</button>
+        <button type="button" role="tab" data-tab="photo" aria-selected="false" aria-controls="tab-photo" tabindex="-1">사진</button>
+        <button type="button" role="tab" data-tab="api" id="tabApi" aria-selected="false" aria-controls="tab-api" tabindex="-1">API 설정</button>
+      </div>
+      <div class="tabpanel" id="tab-ai" role="tabpanel" hidden><form class="sec" id="askForm" style="gap:12px">
         <label class="lab" for="prompt">무엇을 만들까요?</label>
         <textarea id="prompt" placeholder="예: 12월 연말 이벤트 피드, 6개월권 297,000원, 12월 31일 마감">12월 신규 회원 이벤트 피드. 6개월권 297,000원, PT 1회 무료 체험, 12월 31일 마감</textarea>
         <div class="ex" id="examples"></div>
@@ -177,45 +239,12 @@ details[open] summary::after{content:"－"}
           <button class="btn ghost" id="stopBtn" type="button" hidden>멈추기</button>
         </div>
         <div class="status" id="status" role="status">지금 화면은 예시 내용이에요. 요청을 쓰고 제작을 누르면 카피·숫자·템플릿을 새로 짜요.</div>
-      </form>
-      <details id="apiBox">
-        <summary>Claude API 설정</summary>
-        <div class="fields">
-          <label for="apiKey">Anthropic API 키<span class="hint">console.anthropic.com에서 발급. 이 기기 브라우저에만 저장돼요.</span><input type="password" id="apiKey" autocomplete="off" placeholder="sk-ant-..."></label>
-          <label for="apiModel">모델<select id="apiModel" style="width:100%;box-sizing:border-box;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:500 14px var(--ui)"><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠르고 저렴</option><option value="claude-opus-5-5">Opus 5.5 · 가장 꼼꼼</option></select></label>
-          <div class="go"><button class="btn ghost" type="button" id="keySave">저장</button><button class="x" type="button" id="keyClear">키 지우기</button></div>
-          <p class="note" style="margin:0">키를 넣은 기기를 다른 사람과 같이 쓰지 마세요. 사용 요금은 이 키의 Anthropic 계정에 청구돼요.</p>
-        </div>
-      </details>
-
-      <div class="sec">
-        <span class="lab">모드</span>
-        <div class="seg" id="modeSeg" role="group" aria-label="모드">
-          <button type="button" data-v="all" aria-pressed="true">전체</button>
-          <button type="button" data-v="pulse" aria-pressed="false">Pulse · 정보형</button>
-          <button type="button" data-v="bold" aria-pressed="false">Bold · 캠페인</button>
-        </div>
+      </form></div>
+      <div class="tabpanel" id="tab-edit" role="tabpanel">
+        <div class="edhead"><div><b id="edName">템플릿</b><small id="edCount"></small></div><label class="chk"><input type="checkbox" id="allFields"> 전체 항목 보기</label></div>
+        <div id="fields"></div>
       </div>
-
-      <div class="sec">
-        <span class="lab">포맷</span>
-        <div class="seg" id="fmtSeg" role="group" aria-label="포맷">
-          <button type="button" data-v="feed" aria-pressed="true">피드 4:5</button>
-          <button type="button" data-v="square" aria-pressed="false">정사각</button>
-          <button type="button" data-v="story" aria-pressed="false">스토리</button>
-          <button type="button" data-v="a4" aria-pressed="false">A4</button>
-        </div>
-      </div>
-
-      <div class="sec">
-        <span class="lab">Pulse 테마</span>
-        <div class="seg" id="themeSeg" role="group" aria-label="테마">
-          <button type="button" data-v="light" aria-pressed="true">라이트</button>
-          <button type="button" data-v="dark" aria-pressed="false">다크</button>
-        </div>
-      </div>
-
-      <div class="sec">
+      <div class="tabpanel" id="tab-photo" role="tabpanel" hidden><div class="sec">
         <span class="lab">사진</span>
         <div class="row2">
           <div class="up"><span class="pv" id="pvBg"></span><span class="t">배경 사진<small id="bgName">없음 · 탭해서 선택</small></span><input type="file" id="fBg" accept="image/*" aria-label="배경 사진 올리기"></div>
@@ -226,12 +255,13 @@ details[open] summary::after{content:"－"}
           <button class="x" type="button" id="clearPh">사진 지우기</button>
         </div>
         <p class="note" style="margin:0">누끼 PNG는 MOVE처럼 큰 단어 앞에 겹쳐져요. 사진은 이 브라우저 안에서만 쓰이고 어디에도 올라가지 않아요.</p>
-      </div>
-
-      <details id="editBox" open>
-        <summary>내용 직접 수정</summary>
-        <div class="fields" id="fields"></div>
-      </details>
+      </div></div>
+      <div class="tabpanel" id="tab-api" role="tabpanel" hidden><div class="fields">
+          <label for="apiKey">Anthropic API 키<span class="hint">console.anthropic.com에서 발급. 이 기기 브라우저에만 저장돼요.</span><input type="password" id="apiKey" autocomplete="off" placeholder="sk-ant-..."></label>
+          <label for="apiModel">모델<select id="apiModel" style="width:100%;box-sizing:border-box;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:500 14px var(--ui)"><option value="claude-sonnet-5-5">Sonnet 5.5 · 기본</option><option value="claude-haiku-5-5">Haiku 5.5 · 빠르고 저렴</option><option value="claude-opus-5-5">Opus 5.5 · 가장 꼼꼼</option></select></label>
+          <div class="go"><button class="btn ghost" type="button" id="keySave">저장</button><button class="x" type="button" id="keyClear">키 지우기</button></div>
+          <p class="note" style="margin:0">키를 넣은 기기를 다른 사람과 같이 쓰지 마세요. 사용 요금은 이 키의 Anthropic 계정에 청구돼요.</p>
+        </div></div>
     </aside>
 
     <section class="stage" aria-label="미리보기">
@@ -243,11 +273,24 @@ details[open] summary::after{content:"－"}
             <button class="btn primary" type="button" id="saveBtn">PNG 저장</button>
           </div>
         </div>
+        <div class="toolbar"><div class="seg" id="fmtSeg" role="group" aria-label="포맷">
+          <button type="button" data-v="feed" aria-pressed="true">피드 4:5</button>
+          <button type="button" data-v="square" aria-pressed="false">정사각</button>
+          <button type="button" data-v="story" aria-pressed="false">스토리</button>
+          <button type="button" data-v="a4" aria-pressed="false">A4</button>
+        </div><div class="seg" id="themeSeg" role="group" aria-label="테마">
+          <button type="button" data-v="light" aria-pressed="true">라이트</button>
+          <button type="button" data-v="dark" aria-pressed="false">다크</button>
+        </div></div>
         <div class="fit" id="fit"></div>
         <div class="status" id="saveStatus"></div>
       </div>
       <div class="viewer strip">
-        <h3>같은 내용, 다른 템플릿</h3>
+        <div class="striphead"><h3>템플릿 — 누르면 바꿔요</h3><div class="seg" id="modeSeg" role="group" aria-label="모드">
+          <button type="button" data-v="all" aria-pressed="true">전체</button>
+          <button type="button" data-v="pulse" aria-pressed="false">Pulse · 정보형</button>
+          <button type="button" data-v="bold" aria-pressed="false">Bold · 캠페인</button>
+        </div></div>
         <div class="thumbs" id="thumbs"></div>
       </div>
     </section>
@@ -449,8 +492,9 @@ function poster(key,H){const t=T[key];const dark=(t.m==="bold")||S.theme==="dark
 /* ---------- render ---------- */
 function visible(){return ORDER.filter(k=>S.mode==="all"||T[k].m===S.mode);}
 function render(){
+ if(S.tpl!==edTpl)buildFields();
  const H=FORMATS[S.fmt].h,fit=$("#fit");
- const avail=Math.max(260,fit.clientWidth||600),maxH=Math.max(420,window.innerHeight*.72);
+ const narrow=window.innerWidth<900,avail=Math.max(260,fit.clientWidth||600),maxH=narrow?Math.max(300,window.innerHeight*.46):Math.max(420,window.innerHeight*.72);
  const sc=Math.min(avail/1080,maxH/H,1);
  fit.innerHTML=`<div class="box" style="width:${Math.round(1080*sc)}px;height:${Math.round(H*sc)}px">${poster(S.tpl,H)}</div>`;
  fit.querySelector(".pc").style.transform=`scale(${sc})`;
@@ -466,22 +510,82 @@ seg("#fmtSeg","fmt");seg("#themeSeg","theme");
 let rt;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(render,150);});
 
 /* ---------- editor ---------- */
-const FIELDS=[["kicker","키커 (작은 라벨)","input"],["headline","헤드라인","area","*단어*는 레드 강조, 줄바꿈 가능"],["sub","서브 문구","input"],["word","영문 대형 단어 (Bold)","input","띄어쓰기로 두 줄: GYM TIME"],
- ["metrics","숫자 카드","area","라벨 | 값 | 단위 | 상태 — 줄마다 하나"],["ring","링 위젯","input","값 | 단위 | 라벨 | 진행률(0-100) | 캡션"],["countdown","D-day","input","남은 일수 | 문구"],
- ["rows","표·가격·시간표 행","area","라벨 | 값 | 메모 — 라벨 앞 *는 강조"],["bullets","불릿 (MOVE)","area","줄마다 하나"],["tags","태그·프로그램","input","쉼표로 구분"],["chips","근육 칩","input","쉼표 구분, 선택은 *어깨"],
- ["chead","후기 커버 헤드라인","area","*단어*는 레드 강조"],["rword","후기 커버 2 대형 영문","input","두 단어: REAL REVIEW"],["ccta","후기 커버 하단 바","input"],["name","코치 이름 (후기)","input"],["creds","코치 이력 (후기)","area","줄바꿈 가능"],["quotes","한마디 인용 (후기 커버)","area","--- 한 줄로 두 인용을 구분, 최대 2개"],["rtag","후기 라벨","input"],["rhead","후기 헤드라인","area","*단어*는 레드 강조"],["review","후기 본문","area","*문장*은 형광펜 강조"],["keywords","후기 키워드","input","쉼표로 구분, 최대 6개"],["sticker","후기 본문 2 스티커","input","후기 결과 한 줄: 1회 체험 → 등록"],["rating","별점","input"],["page","후기 페이지 번호","input","커버는 01, 본문은 02부터"],["total","전체 장 수","input"],["source","출처","input"],["cta","버튼 문구","input"],["footnote","하단 안내","input"],["date","날짜","input"]];
-const toText={metrics:v=>v.map(m=>[m.label,m.value,m.unit,m.status].join(" | ")).join("\n"),ring:r=>[r.value,r.unit,r.label,r.progress,r.caption].join(" | "),countdown:d=>[d.days,d.label].join(" | "),
- rows:v=>v.map(r=>[r.label,r.value,r.note].join(" | ")).join("\n"),quotes:v=>v.join("\n---\n"),keywords:v=>v.join(", "),bullets:v=>v.join("\n"),tags:v=>v.join(", "),chips:v=>v.map(c=>(c.on?"*":"")+c.label).join(", ")};
-const sp=s=>s.split("|").map(x=>x.trim());
-const fromText={metrics:t=>t.split("\n").filter(x=>x.trim()).slice(0,4).map(l=>{const[a,b,c,d]=sp(l);return{label:a||"",value:b||"",unit:c||"",status:d||""}}),
- ring:t=>{const[a,b,c,d,e]=sp(t);return{value:a||"",unit:b||"",label:c||"",progress:Math.max(0,Math.min(100,parseFloat(d)||0)),caption:e||""}},
- countdown:t=>{const[a,b]=sp(t);return{days:a||"",label:b||""}},
- rows:t=>t.split("\n").filter(x=>x.trim()).slice(0,8).map(l=>{const[a,b,c]=sp(l);return{label:a||"",value:b||"",note:c||""}}),
- quotes:t=>t.split(/\n?---\n?/).map(x=>x.trim()).filter(Boolean).slice(0,2),keywords:t=>t.split(",").map(x=>x.trim()).filter(Boolean).slice(0,6),
- bullets:t=>t.split("\n").map(x=>x.trim()).filter(Boolean).slice(0,3),tags:t=>t.split(",").map(x=>x.trim()).filter(Boolean).slice(0,4),
- chips:t=>t.split(",").map(x=>x.trim()).filter(Boolean).slice(0,6).map(x=>({label:x.replace(/^\*/,""),on:/^\*/.test(x)}))};
-function buildFields(){$("#fields").innerHTML=FIELDS.map(([k,l,t,h])=>{const v=toText[k]?toText[k](S.c[k]):S.c[k];return `<label for="f_${k}">${esc(l)}${h?`<span class="hint">${esc(h)}</span>`:""}${t==="area"?`<textarea id="f_${k}" data-k="${k}" rows="${k==="review"?6:k==="headline"?2:3}">${esc(v)}</textarea>`:`<input type="text" id="f_${k}" data-k="${k}" value="${esc(v)}">`}</label>`}).join("");}
-let et;$("#fields").addEventListener("input",e=>{const k=e.target.dataset.k;if(!k)return;const v=e.target.value;S.c[k]=fromText[k]?fromText[k](v):v;clearTimeout(et);et=setTimeout(render,120);});
+const USES={summary:["kicker","headline","sub","metrics"],rings:["ring","metrics","countdown"],mono:["kicker","headline","ring","rows"],price:["kicker","headline","rows","footnote"],schedule:["kicker","headline","rows","footnote"],dday:["kicker","headline","countdown","cta"],notice:["date","headline","sub","rows","footnote"],coach:["headline","sub","tags","metrics","footnote"],lift:["word","kicker","date"],move:["word","headline","bullets"],fog:["headline"],muscle:["kicker","headline","chips"],rhythm:["headline"],
+ reviewCover:["chead","quotes","name","creds","rating","ccta","total","source"],review:["rtag","rhead","review","keywords","name","rating","page","total","source"],reviewCover2:["rword","chead","quotes","name","creds","rating","ccta","total"],review2:["rtag","review","sticker","keywords","name","rating","page","total","source"]};
+const GROUPS=[["txt","제목과 문구"],["rev","후기"],["num","숫자"],["list","목록"],["foot","하단 정보"]];
+const F={
+ kicker:{g:"txt",t:"text",l:"작은 라벨",h:"영문 대문자 · 예: DECEMBER EVENT"},
+ headline:{g:"txt",t:"area",l:"헤드라인",h:"레드로 강조할 단어를 *별표*로 감싸요 · 줄바꿈 가능",rows:2},
+ sub:{g:"txt",t:"text",l:"서브 문구"},
+ word:{g:"txt",t:"text",l:"영문 대형 단어",h:"두 단어면 두 줄 · 예: GYM TIME"},
+ chead:{g:"txt",t:"area",l:"커버 헤드라인",h:"코치 이름처럼 강조할 단어를 *별표*로",rows:2},
+ rword:{g:"txt",t:"text",l:"대형 영문 두 단어",h:"예: REAL REVIEW · TRUE STORY"},
+ rtag:{g:"txt",t:"text",l:"후기 라벨",h:"예: 광건팀장 PT 수업 후기"},
+ rhead:{g:"txt",t:"area",l:"후기 헤드라인",h:"레드로 강조할 구절을 *별표*로",rows:2},
+ quotes:{g:"rev",t:"quotes",l:"회원 한마디",max:2},
+ review:{g:"rev",t:"area",l:"후기 원문",h:"원문 그대로 · 형광펜 칠할 문장만 *별표*로 감싸요",rows:7},
+ sticker:{g:"rev",t:"text",l:"스티커 문구",h:"후기에 실제로 나온 결과 · 예: 1회 체험 → 등록"},
+ keywords:{g:"rev",t:"chips",l:"후기 키워드",max:6,h:"첫 번째 키워드가 레드로 강조돼요"},
+ name:{g:"rev",t:"text",l:"코치 이름"},
+ creds:{g:"rev",t:"area",l:"코치 이력",rows:2},
+ rating:{g:"rev",t:"rating",l:"별점"},
+ metrics:{g:"num",t:"metrics",l:"숫자 카드",max:4},
+ ring:{g:"num",t:"ring",l:"진행 링"},
+ countdown:{g:"num",t:"countdown",l:"D-day"},
+ rows:{g:"list",t:"rows",l:"표 · 가격 · 시간표",max:8},
+ bullets:{g:"list",t:"strs",l:"불릿",max:3},
+ tags:{g:"list",t:"chips",l:"태그",max:4},
+ chips:{g:"list",t:"muscle",l:"운동 부위",h:"누른 부위가 바디맵에서 레드로 켜져요"},
+ ccta:{g:"foot",t:"text",l:"하단 바 문구"},
+ cta:{g:"foot",t:"text",l:"버튼 문구"},
+ page:{g:"foot",t:"num",l:"이 장 번호",min:2,max:10},
+ total:{g:"foot",t:"num",l:"전체 장 수",min:2,max:10},
+ source:{g:"foot",t:"text",l:"출처"},
+ footnote:{g:"foot",t:"text",l:"하단 안내"},
+ date:{g:"foot",t:"text",l:"날짜"}};
+const MUSCLES=["어깨","가슴","등","삼두","이두","복근","하체"];
+let edTpl=null;
+const at=(k,i,p)=>`data-k="${k}"${i!=null?` data-i="${i}"`:""}${p?` data-p="${p}"`:""}`;
+function fieldHTML(k){const f=F[k],v=S.c[k],id="f_"+k;let body="";
+ const inp=(val,a,ph,cls)=>`<input type="text" class="${cls||""}" ${a} value="${esc(val)}" placeholder="${esc(ph||"")}">`;
+ if(f.t==="text")body=inp(v,at(k)+` id="${id}"`);
+ else if(f.t==="area")body=`<textarea id="${id}" ${at(k)} rows="${f.rows||3}">${esc(v)}</textarea>`;
+ else if(f.t==="num")body=`<div class="step"><button type="button" class="mini" data-act="dec" data-k="${k}" aria-label="${f.l} 줄이기">−</button><input type="text" inputmode="numeric" id="${id}" ${at(k)} value="${esc(v)}"><button type="button" class="mini" data-act="inc" data-k="${k}" aria-label="${f.l} 늘리기">＋</button></div>`;
+ else if(f.t==="rating")body=`<div class="stars" role="group" aria-label="별점">${[1,2,3,4,5].map(n=>`<button type="button" data-act="rate" data-k="${k}" data-v="${n}" aria-pressed="${+v>=n}" aria-label="${n}점">★</button>`).join("")}<span>${esc(v)}.0</span></div>`;
+ else if(f.t==="metrics")body=v.map((m,i)=>`<div class="item"><div class="ihead"><b>카드 ${i+1}</b><button type="button" class="x" data-act="del" data-k="${k}" data-i="${i}">삭제</button></div><div class="g2">${inp(m.label,at(k,i,"label"),"라벨 · 예: 6개월 회원권")}${inp(m.status,at(k,i,"status"),"상태 · 예: 12.31 마감")}</div><div class="g2 vu">${inp(m.value,at(k,i,"value"),"값 · 예: 297,000","big")}${inp(m.unit,at(k,i,"unit"),"단위")}</div></div>`).join("")+(v.length<f.max?`<button type="button" class="add" data-act="add" data-k="${k}">＋ 숫자 카드 추가</button>`:"");
+ else if(f.t==="rows")body=v.map((r,i)=>{const hi=/^\*/.test(r.label);return `<div class="item${hi?" hi":""}"><div class="ihead"><button type="button" class="pin" data-act="star" data-k="${k}" data-i="${i}" aria-pressed="${hi}">${hi?"★ 강조됨":"☆ 강조"}</button><button type="button" class="x" data-act="del" data-k="${k}" data-i="${i}">삭제</button></div><div class="g3">${inp(plain(r.label),at(k,i,"label"),"항목 · 예: 평일")}${inp(r.value,at(k,i,"value"),"값 · 예: 06:00–24:00")}${inp(r.note,at(k,i,"note"),"메모 (선택)")}</div></div>`}).join("")+(v.length<f.max?`<button type="button" class="add" data-act="add" data-k="${k}">＋ 행 추가</button>`:"");
+ else if(f.t==="ring")body=`<div class="item"><div class="g2 vu">${inp(v.value,at(k,null,"value"),"값","big")}${inp(v.unit,at(k,null,"unit"),"단위")}</div>${inp(v.label,at(k,null,"label"),"링 안 라벨 · 예: 남은 출석")}<label class="rng">진행률 <output>${v.progress}%</output><input type="range" min="0" max="100" step="1" value="${v.progress}" ${at(k,null,"progress")}></label>${inp(v.caption,at(k,null,"caption"),"아래 문구 · 예: 이번 주 5회 출석")}</div>`;
+ else if(f.t==="countdown")body=`<div class="item"><div class="g2 vu">${inp(v.days,at(k,null,"days"),"남은 일수","big")}<span class="unitlab">일 남음</span></div>${inp(v.label,at(k,null,"label"),"문구 · 예: 12월 이벤트 마감까지")}</div>`;
+ else if(f.t==="quotes"||f.t==="strs")body=v.map((q,i)=>`<div class="qrow">${f.t==="quotes"?`<textarea rows="2" ${at(k,i)} placeholder="회원 한마디">${esc(q)}</textarea>`:inp(q,at(k,i),"불릿")}<button type="button" class="x" data-act="del" data-k="${k}" data-i="${i}" aria-label="삭제">✕</button></div>`).join("")+(v.length<f.max?`<button type="button" class="add" data-act="add" data-k="${k}">＋ 추가</button>`:"");
+ else if(f.t==="chips")body=`<div class="chipbox">${v.map((c,i)=>`<span class="chip${i?"":" first"}">${esc(c)}<button type="button" data-act="del" data-k="${k}" data-i="${i}" aria-label="${esc(c)} 삭제">✕</button></span>`).join("")}${v.length<f.max?`<input type="text" class="chipin" data-chipin="${k}" placeholder="입력 후 Enter">`:""}</div>`;
+ else if(f.t==="muscle")body=`<div class="mus">${MUSCLES.map(m=>{const on=v.some(c=>c.label===m&&c.on);return `<button type="button" data-act="mus" data-k="${k}" data-v="${m}" aria-pressed="${on}">${on?"✓ ":""}${m}</button>`}).join("")}</div>`;
+ const forId=["text","area","num"].includes(f.t)?` for="${id}"`:"";
+ return `<div class="fld"><label class="fl"${forId}>${esc(f.l)}</label>${f.h?`<p class="fh">${esc(f.h)}</p>`:""}${body}</div>`;}
+function buildFields(){edTpl=S.tpl;const all=$("#allFields")&&$("#allFields").checked,keys=all?Object.keys(F):(USES[S.tpl]||[]);
+ $("#edName").textContent=T[S.tpl].n;$("#edCount").textContent=all?"전체 항목":`이 템플릿에 쓰이는 ${keys.length}개 항목`;
+ $("#fields").innerHTML=GROUPS.map(([g,gl])=>{const ks=keys.filter(k=>F[k].g===g);return ks.length?`<section class="grp"><h4>${gl}</h4>${ks.map(fieldHTML).join("")}</section>`:""}).join("");}
+let et;function soon(){clearTimeout(et);et=setTimeout(render,120);}
+$("#fields").addEventListener("input",e=>{const el=e.target,k=el.dataset.k;if(!k)return;const i=el.dataset.i,p=el.dataset.p,v=el.value,f=F[k];
+ if(i!=null&&p){if(f.t==="rows"&&p==="label"){const hi=/^\*/.test(S.c[k][i].label);S.c[k][i].label=(hi?"*":"")+v;}else S.c[k][i][p]=v;}
+ else if(i!=null)S.c[k][i]=v;
+ else if(p){S.c[k][p]=p==="progress"?+v:v;if(p==="progress"){const o=el.parentElement.querySelector("output");if(o)o.textContent=v+"%";}}
+ else S.c[k]=v;soon();});
+function addItem(k){const f=F[k],a=S.c[k];if(a.length>=f.max)return;
+ if(f.t==="metrics")a.push({label:"",value:"",unit:"",status:""});else if(f.t==="rows")a.push({label:"",value:"",note:""});else a.push("");}
+$("#fields").addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const k=b.dataset.k,i=+b.dataset.i,act=b.dataset.act;
+ if(act==="add")addItem(k);else if(act==="del")S.c[k].splice(i,1);
+ else if(act==="star"){const r=S.c[k][i];r.label=/^\*/.test(r.label)?r.label.slice(1):"*"+r.label;}
+ else if(act==="rate")S.c[k]=b.dataset.v;
+ else if(act==="inc"||act==="dec"){const f=F[k];S.c[k]=String(Math.max(f.min,Math.min(f.max,(parseInt(S.c[k])||f.min)+(act==="inc"?1:-1))));}
+ else if(act==="mus"){const m=b.dataset.v,c=S.c[k].find(x=>x.label===m);if(c)c.on=!c.on;else S.c[k].push({label:m,on:true});S.c[k].sort((a,b)=>MUSCLES.indexOf(a.label)-MUSCLES.indexOf(b.label));}
+ const y=$("#fields").scrollTop;buildFields();$("#fields").scrollTop=y;render();
+ if(act==="add"){const n=S.c[k].length-1,el=$("#fields").querySelector(`input[data-k="${k}"][data-i="${n}"],textarea[data-k="${k}"][data-i="${n}"]`);if(el)el.focus();}});
+$("#fields").addEventListener("keydown",e=>{const k=e.target.dataset&&e.target.dataset.chipin;if(!k||e.key!=="Enter"||e.isComposing)return;e.preventDefault();const v=e.target.value.trim();if(!v)return;if(S.c[k].length<F[k].max)S.c[k].push(v);buildFields();render();const n=$(`[data-chipin="${k}"]`);if(n)n.focus();});
+document.addEventListener("change",e=>{if(e.target.id==="allFields")buildFields();});
+/* tabs */
+function selectTab(id){document.querySelectorAll(".tabs button").forEach(b=>{const on=b.dataset.tab===id;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});document.querySelectorAll(".tabpanel").forEach(p=>p.hidden=p.id!=="tab-"+id);}
+$(".tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)selectTab(b.dataset.tab);});
+$(".tabs").addEventListener("keydown",e=>{if(!["ArrowLeft","ArrowRight"].includes(e.key))return;const bs=[...document.querySelectorAll(".tabs button")],i=bs.findIndex(b=>b.getAttribute("aria-selected")==="true"),n=bs[(i+(e.key==="ArrowRight"?1:bs.length-1))%bs.length];selectTab(n.dataset.tab);n.focus();});
 
 /* ---------- photos ---------- */
 function loadImg(file,keepAlpha){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{
@@ -503,7 +607,7 @@ $("#examples").addEventListener("click",e=>{const b=e.target.closest("button");i
 let ctl=null;
 const LS={get:k=>{try{return localStorage.getItem(k)||""}catch(e){return ""}},set:(k,v)=>{try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
 $("#apiKey").value=LS.get("spoany.key");$("#apiModel").value=LS.get("spoany.model")||"claude-sonnet-5-5";
-function keyState(){const has=!!LS.get("spoany.key");$("#goBtn").textContent=has?"Claude로 제작":"API 키 넣고 제작";if(!has)$("#apiBox").open=true;}
+function keyState(){const has=!!LS.get("spoany.key");$("#goBtn").textContent=has?"Claude로 제작":"API 키 넣고 제작";{const t=$("#tabApi");if(t)t.classList.toggle("dot",!has);}}
 $("#keySave").addEventListener("click",()=>{LS.set("spoany.key",$("#apiKey").value.trim());LS.set("spoany.model",$("#apiModel").value);keyState();$("#status").className="status";$("#status").textContent=LS.get("spoany.key")?"저장했어요. 이제 요청을 쓰고 제작을 눌러 보세요.":"키를 지웠어요.";});
 $("#keyClear").addEventListener("click",()=>{$("#apiKey").value="";LS.set("spoany.key","");keyState();$("#status").textContent="키를 지웠어요.";});
 $("#apiModel").addEventListener("change",()=>LS.set("spoany.model",$("#apiModel").value));
@@ -544,11 +648,11 @@ function clean(o){const c=S.c,str=(v,n)=>typeof v==="string"?v.slice(0,n):undefi
  if(Array.isArray(o.chips))out.chips=o.chips.slice(0,6).map(x=>({label:String(x.label??""),on:!!x.on}));
  return out;}
 const ERR={no_key:"아래 Claude API 설정에 API 키를 넣고 저장해 주세요.",bad_key:"API 키가 맞지 않아요. 설정에서 키를 다시 확인해 주세요.",network:"인터넷 연결을 확인하고 다시 시도해 주세요.",overloaded:"Claude 서버가 바빠요. 잠시 후 다시 눌러 주세요.",rate_limited:"요청이 많아요. 잠시 후 다시 눌러 주세요.",cancelled:"멈췄어요."};
-$("#askForm").addEventListener("submit",async e=>{e.preventDefault();if(!LS.get("spoany.key")){$("#apiBox").open=true;$("#apiKey").focus();$("#status").className="status err";$("#status").textContent=ERR.no_key;return;}const req=$("#prompt").value.trim();if(!req){$("#prompt").focus();return;}
+$("#askForm").addEventListener("submit",async e=>{e.preventDefault();if(!LS.get("spoany.key")){selectTab("api");$("#apiKey").focus();$("#status").className="status err";$("#status").textContent=ERR.no_key;return;}const req=$("#prompt").value.trim();if(!req){$("#prompt").focus();return;}
  ctl=new AbortController();$("#goBtn").disabled=true;$("#stopBtn").hidden=false;const st=$("#status");st.className="status";st.textContent="Claude가 카피와 레이아웃을 짜는 중…";
  try{const o=await sampleFn.json(buildPrompt(req),{signal:ctl.signal,modelTier:"default"});
   if(!o||typeof o!=="object")throw{code:"bad"};Object.assign(S.c,clean(o));if(T[o.template]){S.tpl=o.template;if(S.mode!=="all"&&T[S.tpl].m!==S.mode){S.mode="all";$("#modeSeg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v==="all"));}}
-  buildFields();render();st.textContent=`완성 — ${T[S.tpl].n} 템플릿. 아래 스트립에서 다른 템플릿도 같은 내용으로 볼 수 있어요.`;}
+  buildFields();render();st.textContent=`완성 — ${T[S.tpl].n} 템플릿. "내용 편집" 탭에서 칸별로 고칠 수 있고, 아래 스트립에서 다른 템플릿으로도 볼 수 있어요.`;}
  catch(err){st.className="status err";st.textContent=ERR[err&&err.code]||"제작하지 못했어요. 요청을 조금 더 구체적으로 써서 다시 시도해 주세요.";}
  finally{$("#goBtn").disabled=false;$("#stopBtn").hidden=true;}});
 $("#stopBtn").addEventListener("click",()=>ctl&&ctl.abort());
