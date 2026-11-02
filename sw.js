@@ -1,4 +1,4 @@
-const V="spoany-studio-v3";
+const V="spoany-studio-v4";
 const CORE=["./","index.html","html2canvas.min.js","html-to-image.js","fonts/PretendardVariable.woff2","fonts/InterTight-Variable.woff2","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
