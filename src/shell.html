@@ -1,0 +1,91 @@
+{{HEAD}}
+<style>
+{{STYLE}}
+</style>
+{{BODY_OPEN}}
+<div class="app">
+  <header class="top">
+    <div class="brand">Spoany <b>Studio</b><small>스포애니 신중동점 홍보물 제작</small></div>
+    <div class="hact">
+      <span class="saved" id="savedMeta" aria-live="polite"></span>
+      <button class="ibtn" type="button" id="undoBtn" aria-label="되돌리기" title="되돌리기 (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button class="ibtn" type="button" id="redoBtn" aria-label="다시 하기" title="다시 하기 (Ctrl+Shift+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+      <button class="btn ghost sm" type="button" id="boxBtn" aria-expanded="false" aria-controls="drawer">보관함</button>
+    </div>
+  </header>
+
+  <div class="drawer" id="drawer" role="dialog" aria-label="보관함" hidden>
+    <div class="dhead"><b>보관함</b><button class="x" type="button" id="drawerClose">닫기</button></div>
+    <p class="note">작업을 이름 붙여 보관해 두고 나중에 다시 불러올 수 있어요. 사진도 같이 보관돼요. 이 기기·이 브라우저에만 저장돼요.</p>
+    <div class="drow"><input type="text" id="draftName" placeholder="이름 · 예: 광건쌤 후기 02"><button class="btn primary sm" type="button" id="draftSave">보관</button></div>
+    <div class="dlist" id="draftList"></div>
+    <div id="newWrap"><button class="btn ghost sm" type="button" id="newBtn">예시 내용으로 새로 시작</button></div>
+  </div>
+
+  <div class="grid">
+    <aside class="panel" aria-label="제작 패널">
+      <div class="tabs" role="tablist" aria-label="제작 단계">
+        <button type="button" role="tab" id="t-gallery" data-tab="gallery" aria-selected="true" aria-controls="tab-gallery">템플릿</button>
+        <button type="button" role="tab" id="t-edit" data-tab="edit" aria-selected="false" aria-controls="tab-edit" tabindex="-1">내용 편집</button>
+        <button type="button" role="tab" id="t-ai" data-tab="ai" aria-selected="false" aria-controls="tab-ai" tabindex="-1">AI 제작</button>
+      </div>
+
+      <div class="tabpanel" id="tab-gallery" role="tabpanel" aria-labelledby="t-gallery">
+        <div class="cats" id="cats" role="group" aria-label="분류"></div>
+        <div class="galinfo"><span id="galInfo"></span><button class="x" type="button" id="toEdit">내용 편집으로 →</button></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+
+      <div class="tabpanel" id="tab-edit" role="tabpanel" aria-labelledby="t-edit" hidden>
+        <div class="edhead"><div><b id="edName">템플릿</b><small id="edCount"></small></div><button class="btn ghost sm" type="button" id="toGallery">템플릿 바꾸기</button></div>
+        <div id="fields"></div>
+        <div class="edfoot"><label class="chk"><input type="checkbox" id="allFields"> 모든 항목 보기</label><span class="note" id="sampleNote"></span></div>
+      </div>
+
+      <div class="tabpanel" id="tab-ai" role="tabpanel" aria-labelledby="t-ai" hidden>
+        <form id="askForm" style="display:flex;flex-direction:column;gap:12px">
+          <label class="lab" for="prompt">무엇을 만들까요?</label>
+          <textarea id="prompt" placeholder="예: 12월 연말 이벤트 피드, 6개월권 297,000원, 12월 31일 마감">12월 신규 회원 이벤트 피드. 6개월권 297,000원, PT 1회 무료 체험, 12월 31일 마감</textarea>
+          <div class="ex" id="examples"></div>
+          <div class="go"><button class="btn primary" id="goBtn" type="submit">Claude로 제작</button><button class="btn ghost" id="stopBtn" type="button" hidden>멈추기</button></div>
+          <div class="status" id="status" role="status"></div>
+        </form>
+        <p class="note">지금 고른 포맷(<span id="aiFmt"></span>)에 맞는 템플릿 중에서 골라 카피와 숫자를 채워요. 결과는 "내용 편집"에서 칸별로 고칠 수 있고, 되돌리기로 이전 상태로 돌아갈 수 있어요.</p>
+        {{AI_SETTINGS}}
+      </div>
+    </aside>
+
+    <section class="stage" aria-label="미리보기">
+      <div class="viewer">
+        <div class="vhead">
+          <div><h2 id="tplName">템플릿</h2><small id="tplMeta"></small></div>
+          <div class="go">
+            <button class="btn ghost" type="button" id="copyBtn">카피 복사</button>
+            <div class="savewrap">
+              <button class="btn primary" type="button" id="saveBtn">PNG 저장</button>
+              <button class="btn primary caret" type="button" id="saveOpt" aria-label="저장 옵션" aria-expanded="false" aria-controls="saveOpts">▾</button>
+              <div class="pop" id="saveOpts" hidden>
+                <span class="lab">파일 형식</span>
+                <div class="seg" id="ftypeSeg" role="group" aria-label="파일 형식"><button type="button" data-v="png" aria-pressed="true">PNG · 선명</button><button type="button" data-v="jpg" aria-pressed="false">JPG · 가벼움</button></div>
+                <span class="lab">해상도</span>
+                <div class="seg" id="resSeg" role="group" aria-label="해상도"><button type="button" data-v="2" aria-pressed="true">SNS용 2배</button><button type="button" data-v="3" aria-pressed="false">인쇄용 3배</button></div>
+                <p class="note" id="resNote"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fmts" id="fmts" role="group" aria-label="포맷"></div>
+        <div class="subbar"><span id="fmtDesc"></span><div class="seg" id="themeSeg" role="group" aria-label="테마"><button type="button" data-v="light" aria-pressed="true">라이트</button><button type="button" data-v="dark" aria-pressed="false">다크</button></div></div>
+        <div class="fit" id="fit"></div>
+        <p class="hint">미리보기에서 글자나 사진을 누르면 그 편집 칸으로 바로 이동해요.</p>
+        <div class="status" id="saveStatus" role="status"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="exp" aria-hidden="true"></div>
+{{SCRIPTS}}
+<script>
+{{APP}}
+</script>
+{{TAIL}}
