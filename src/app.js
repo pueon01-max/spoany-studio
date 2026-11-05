@@ -156,8 +156,14 @@ const MONO_AUTO=["rings","facility","team","coach","move","rhythm","xbanner","wi
 const ALLKEYS=Object.keys(F);
 
 /* ---------- poster ---------- */
-function poster(key,fk,exporting){const t=T[key],f=FORMATS[fk];C=cv(key);const dark=(t.m==="bold")||S.theme==="dark";
- return `<div class="pc${dark?" dark":""}${exporting?" exporting":""}" style="width:${f.w}px;height:${f.h}px">${t.f(f.h,f.w)}<div class="grain"></div></div>`;}
+/* SNS 포맷은 휴대폰에서 보기 좋게 레이아웃 전체를 살짝 키워요 (작은 캔버스에 배치한 뒤 확대) */
+const ZOOM={feed:1.14,square:1.08,story:1.14};
+/* 템플릿별 확대 비율 (1=포맷 확대 그대로, 0=확대 안 함). 큰 타이포가 주인공인 캠페인은 원래 크기 유지 */
+const ZT={lift:0,move:0,fog:0,rhythm:0,reviewCover2:.5,review2:.5,mono:.5,reviewCover:.5,coupon:.5,beforeAfter:.5},ZT_SQ={review:0,reviewCover:0};
+function poster(key,fk,exporting){const t=T[key],f=FORMATS[fk];C=cv(key);const dark=(t.m==="bold")||S.theme==="dark",z=1+((ZOOM[fk]||1)-1)*((fk==="square"?ZT_SQ[key]:undefined)??ZT[key]??1);
+ const lw=Math.round(f.w/z),lh=Math.round(f.h/z);FH=f.h;const inner=t.f(lh,lw);
+ const body=z===1?inner:`<div class="pz" style="position:absolute;left:0;top:0;width:${lw}px;height:${lh}px;transform:scale(${f.w/lw},${f.h/lh});transform-origin:0 0">${inner}</div>`;
+ return `<div class="pc${dark?" dark":""}${exporting?" exporting":""}" style="width:${f.w}px;height:${f.h}px">${body}<div class="grain"></div></div>`;}
 
 /* ---------- format & theme UI ---------- */
 function fmtIcon(f){const r=f.w/f.h,h=r<1?15:11,w=Math.max(5,Math.min(24,Math.round(h*r)));return `<i style="width:${w}px;height:${h}px"></i>`;}
