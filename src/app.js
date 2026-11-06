@@ -158,9 +158,9 @@ const ALLKEYS=Object.keys(F);
 /* ---------- poster ---------- */
 /* SNS 포맷은 휴대폰에서 보기 좋게 레이아웃 전체를 살짝 키워요 (작은 캔버스에 배치한 뒤 확대) */
 const ZOOM={feed:1.14,square:1.08,story:1.14};
-/* 템플릿별 확대 비율 (1=포맷 확대 그대로, 0=확대 안 함). 큰 타이포가 주인공인 캠페인은 원래 크기 유지 */
-const ZT={lift:0,move:0,fog:0,rhythm:0,reviewCover2:.5,review2:.5,mono:.5,reviewCover:.5,coupon:.5,beforeAfter:.5},ZT_SQ={review:0,reviewCover:0};
-function poster(key,fk,exporting){const t=T[key],f=FORMATS[fk];C=cv(key);const dark=(t.m==="bold")||S.theme==="dark",z=1+((ZOOM[fk]||1)-1)*((fk==="square"?ZT_SQ[key]:undefined)??ZT[key]??1);
+/* 확대는 정보형 카드 템플릿에만 (1=그대로 확대, .5=절반). 사진·누끼·큰 타이포 포스터는 원래 배열 그대로 */
+const ZT={summary:1,coupon:.5,price:1,dday:1,notice:1,schedule:1,faq:1,facility:1,tips:1,routine:1},ZT_SQ={};
+function poster(key,fk,exporting){const t=T[key],f=FORMATS[fk];C=cv(key);const dark=(t.m==="bold")||S.theme==="dark",z=1+((ZOOM[fk]||1)-1)*((fk==="square"?ZT_SQ[key]:undefined)??ZT[key]??0);
  const lw=Math.round(f.w/z),lh=Math.round(f.h/z);FH=f.h;const inner=t.f(lh,lw);
  const body=z===1?inner:`<div class="pz" style="position:absolute;left:0;top:0;width:${lw}px;height:${lh}px;transform:scale(${f.w/lw},${f.h/lh});transform-origin:0 0">${inner}</div>`;
  return `<div class="pc${dark?" dark":""}${exporting?" exporting":""}" style="width:${f.w}px;height:${f.h}px">${body}<div class="grain"></div></div>`;}
@@ -314,12 +314,19 @@ function goField(k,i){if(!F[k])return;selectTab("edit");if(!(USES[S.tpl]||[]).in
 $("#fit").addEventListener("click",e=>{const el=e.target.closest("[data-f]");if(el)goField(el.dataset.f,el.dataset.i);});
 
 /* ---------- photos ---------- */
+/* 사진 저장: 누끼(투명 배경)는 WebP로 가볍게. 브라우저의 CSS 이미지 길이 제한(약 2MB)을 넘지 않도록 필요하면 크기를 줄여요 */
+const PH_LIM=1800000;
+function encImg(cv_,alpha){if(!alpha)return cv_.toDataURL("image/jpeg",.9);const w=cv_.toDataURL("image/webp",.9);return w.startsWith("data:image/webp")?w:cv_.toDataURL("image/png");}
 function makeMono(src,alpha){return new Promise((res,rej)=>{const im=new Image();im.onerror=rej;im.onload=()=>{
- const max=1800,s=Math.min(1,max/Math.max(im.width,im.height)),w=Math.round(im.width*s),h=Math.round(im.height*s);
- const cv_=document.createElement("canvas");cv_.width=w;cv_.height=h;const x=cv_.getContext("2d");x.drawImage(im,0,0,w,h);
- const fmt=alpha?"image/png":"image/jpeg",o=cv_.toDataURL(fmt,.9);
- const d=x.getImageData(0,0,w,h),p=d.data;for(let i=0;i<p.length;i+=4){let g=.299*p[i]+.587*p[i+1]+.114*p[i+2];g=(g-128)*1.25+128;g=g<0?0:g>255?255:g;p[i]=p[i+1]=p[i+2]=g;}
- x.putImageData(d,0,0);res([o,cv_.toDataURL(fmt,.9)]);};im.src=src;});}
+ let max=1800,o,m;
+ for(let t=0;t<8;t++){
+  const s=Math.min(1,max/Math.max(im.width,im.height)),w=Math.round(im.width*s),h=Math.round(im.height*s);
+  const cv_=document.createElement("canvas");cv_.width=w;cv_.height=h;const x=cv_.getContext("2d");x.drawImage(im,0,0,w,h);
+  o=encImg(cv_,alpha);
+  const d=x.getImageData(0,0,w,h),p=d.data;for(let i=0;i<p.length;i+=4){let g=.299*p[i]+.587*p[i+1]+.114*p[i+2];g=(g-128)*1.25+128;g=g<0?0:g>255?255:g;p[i]=p[i+1]=p[i+2]=g;}
+  x.putImageData(d,0,0);m=encImg(cv_,alpha);
+  if(o.length<PH_LIM&&m.length<PH_LIM)break;max=Math.round(Math.max(w,h)*.85);}
+ res([o,m]);};im.src=src;});}
 function readFile(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>res(fr.result);fr.readAsDataURL(file);});}
 function phCss(){let st=$("#phvars");if(!st){st=document.createElement("style");st.id="phvars";document.head.appendChild(st);}
  st.textContent=":root{"+Object.keys(PH).map(id=>`--p-${id}-o:url("${PH[id].o}");--p-${id}-m:url("${PH[id].m}");`).join("")+"}";}
