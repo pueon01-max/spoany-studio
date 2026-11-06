@@ -129,6 +129,8 @@ function withPulse(h,w,ht,sw){const L=h.split("<br>"),i=Math.max(0,L.findIndex(l
    n 이름 · cat 분류 · m pulse/bold · shape p(세로)/l(가로)/x(X배너)
    d 설명 · sx 손대지 않았을 때 쓰는 템플릿별 예시 · pair 다른 모양 포맷의 짝
    =================================================================== */
+// D-day 링 채움: 편집에서 직접 정하면 그 값, 아니면 남은 일수로 자동
+const ddFill=cd=>{const p=cd&&cd.progress;if(p!==undefined&&p!==null&&p!==""&&!isNaN(+p))return Math.max(0,Math.min(100,+p));const d=+(cd&&cd.days);return isNaN(d)?70:Math.max(8,Math.min(100,100-d*3));};
 const T={};
 
 /* ---------- 후기 ---------- */
@@ -222,7 +224,7 @@ T.coupon={n:"쿠폰",cat:"event",m:"pulse",d:"할인·체험권 쿠폰",pair:{l:
 
 T.dday={n:"D-day",cat:"event",m:"pulse",d:"마감·오픈 카운트다운",pair:{l:"wideInfo",x:"xbanner"},f(H){const c=C,D=Math.min(760,Math.round(H*.48));
  return `<div class="pad" style="align-items:center;text-align:center"><div class="cap"${A("kicker")}>${esc(c.kicker)}</div><h1 class="hl"${A("headline")} style="margin-top:18px;font-size:76px;text-align:center">${rich(c.headline)}</h1>
- <div${A("countdown")} style="position:relative;width:${D}px;height:${D}px;margin:auto">${ring(D,Math.round(D*.06),Math.max(8,100-+c.countdown.days*3||70))}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="cap">D-DAY</div><div style="font:600 ${Math.round(D*.38)}px/1 var(--sans);letter-spacing:-.06em;margin-top:6px">${esc(c.countdown.days)}</div><div class="lb" style="margin-top:12px">${esc(c.countdown.label)}</div></div></div>
+ <div${A("countdown")} style="position:relative;width:${D}px;height:${D}px;margin:auto">${ring(D,Math.round(D*.06),ddFill(c.countdown))}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="cap">D-DAY</div><div style="font:600 ${Math.round(D*.38)}px/1 var(--sans);letter-spacing:-.06em;margin-top:6px">${esc(c.countdown.days)}</div><div class="lb" style="margin-top:12px">${esc(c.countdown.label)}</div></div></div>
  <div class="btn"${A("cta")}>${esc(c.cta)} ${I.arrow}</div><div style="margin-top:36px">${mk()}</div></div>`}};
 
 T.price={n:"가격표",cat:"event",m:"pulse",d:"회원권 가격 비교",pair:{l:"widePrice",x:"xbanner"},sx:{kicker:"MEMBERSHIP",headline:"나에게 맞는\n*회원권*을 골라요"},f(H){const c=C,rs=c.rows.slice(0,FH>=1800?4:3),tall=FH>=1300;

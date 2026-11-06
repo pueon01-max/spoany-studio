@@ -129,7 +129,7 @@ const F={
  metrics:{t:"list",l:"숫자 카드",max:4,add:"숫자 카드 추가",parts:[{p:"label",ph:"라벨 · 예: 6개월 회원권",w:3},{p:"value",ph:"값",big:1,w:2},{p:"unit",ph:"단위",w:1},{p:"status",ph:"상태 · 예: 12.31 마감",w:3}],blank:{label:"",value:"",unit:"",status:""}},
  changes:{t:"list",l:"변화 수치",max:3,add:"수치 추가",h:"실제 회원의 기록만, 동의를 받고 넣어 주세요",parts:[{p:"label",ph:"항목 · 예: 체중",w:2},{p:"value",ph:"값 · 예: −6.4",big:1,w:2},{p:"unit",ph:"단위",w:2}],blank:{label:"",value:"",unit:""}},
  ring:{t:"obj",l:"진행 링",parts:[{p:"value",ph:"값",big:1,w:2},{p:"unit",ph:"단위",w:1},{p:"label",ph:"링 안 라벨 · 예: 남은 출석",w:3},{p:"progress",range:1,w:3},{p:"caption",ph:"아래 문구",w:3}]},
- countdown:{t:"obj",l:"D-day",parts:[{p:"days",ph:"남은 일수",big:1,w:2,suffix:"일 남음"},{p:"label",ph:"문구 · 예: 12월 이벤트 마감까지",w:3}]},
+ countdown:{t:"obj",l:"D-day",parts:[{p:"days",ph:"남은 일수",big:1,w:2,suffix:"일 남음"},{p:"label",ph:"문구 · 예: 12월 이벤트 마감까지",w:3},{p:"progress",range:1,w:3}]},
  offer:{t:"obj",l:"혜택 (크게 보이는 숫자)",parts:[{p:"value",ph:"예: 30",big:1,w:1},{p:"unit",ph:"예: % 할인",w:2},{p:"label",ph:"라벨 · 예: PT 체험권",w:3}]},
  ba:{t:"obj",l:"기간 · 시점",parts:[{p:"period",ph:"기간 · 예: 12주",w:1},{p:"before",ph:"비포 시점",w:1},{p:"after",ph:"애프터 시점",w:1},{p:"note",ph:"하단 안내",w:3}]},
  qr:{t:"obj",l:"QR 코드",h:"네이버 예약·카카오 채널 같은 링크를 넣으면 QR이 생겨요. 비우면 안 보여요.",parts:[{p:"url",ph:"https://…",w:3,url:1},{p:"label",ph:"QR 아래 문구 · 예: 상담 예약",w:3}]},
@@ -273,7 +273,7 @@ const at=(k,i,p)=>`data-k="${k}"${i!=null?` data-i="${i}"`:""}${p?` data-p="${p}
 function meterTxt(v){const L=plain(v).split("\n").map(x=>x.trim()).filter(Boolean),mx=Math.max(0,...L.map(l=>l.length));return {t:`${L.length}줄 · 가장 긴 줄 ${mx}자`,warn:L.length>3||mx>13};}
 const etb=(k)=>`<div class="etb" data-etb="${k}"><button type="button" class="r" data-act="emph" data-k="${k}" title="선택한 글자를 레드로 강조">강조</button><button type="button" data-act="unemph" data-k="${k}" title="이 칸의 강조를 모두 지우기">강조 지우기</button></div>`;
 function partHTML(k,i,p,val){const a=at(k,i,p.p),w="w"+(p.w||3);
- if(p.range)return `<label class="rng ${w}">진행률 <output>${+val||0}%</output><input type="range" min="0" max="100" step="1" value="${+val||0}" ${a}></label>`;
+ if(p.range)return `<label class="rng ${w}">${k==="countdown"?"링 채움":"진행률"} <output>${+val||0}%</output><input type="range" min="0" max="100" step="1" value="${+val||0}" ${a}></label>`;
  if(p.area)return `<textarea class="${w}" rows="2" ${a} placeholder="${esc(p.ph||"")}">${esc(val)}</textarea>`;
  const inp=`<input type="${p.url?"url":"text"}"${p.big?' class="big"':""} ${a} value="${esc(val)}" placeholder="${esc(p.ph||"")}"${p.url?' inputmode="url" autocomplete="off" spellcheck="false"':""}>`;
  return p.suffix?`<div class="sfx ${w}">${inp}<span>${esc(p.suffix)}</span></div>`:`<div class="${w}">${inp}</div>`;}
@@ -290,7 +290,7 @@ function fieldHTML(k){const f=F[k],V=curV(),v=V[k],lb=(LBL[S.tpl]&&LBL[S.tpl][k]
   case "area":body=`<textarea id="${id}" ${at(k)} rows="${f.rows||3}">${esc(v)}</textarea>`;break;
   case "num":body=`<div class="step"><button type="button" class="mini" data-act="dec" data-k="${k}" aria-label="${esc(f.l)} 줄이기">−</button><input type="text" inputmode="numeric" id="${id}" ${at(k)} value="${esc(v)}"><button type="button" class="mini" data-act="inc" data-k="${k}" aria-label="${esc(f.l)} 늘리기">＋</button></div>`;break;
   case "rating":body=`<div class="stars" role="group" aria-label="별점">${[1,2,3,4,5].map(n=>`<button type="button" data-act="rate" data-k="${k}" data-v="${n}" aria-pressed="${+v>=n}" aria-label="${n}점">★</button>`).join("")}<span>${esc(v)}.0</span></div>`;break;
-  case "obj":body=`<div class="pgrid">${f.parts.map(p=>partHTML(k,null,p,v[p.p]??"")).join("")}</div>`;break;
+  case "obj":body=`<div class="pgrid">${f.parts.map(p=>partHTML(k,null,p,k==="countdown"&&p.p==="progress"?ddFill(v):v[p.p]??"")).join("")}</div>`;break;
   case "list":body=v.map((it,i)=>{const hi=f.star&&isStar(it);return `<div class="item${hi?" hi":""}" data-li="${i}">${itemTools(k,i,v.length,f.star?`<button type="button" class="pin" data-act="star" data-k="${k}" data-i="${i}" aria-pressed="${hi}">${hi?"★ 강조됨":"☆ 강조"}</button>`:"")}<div class="pgrid">${f.parts.map(p=>partHTML(k,i,p,(f.star&&p.p==="label")?plain(it.label):(it[p.p]??""))).join("")}</div></div>`}).join("")+addBtn(k,f,v.length);break;
   case "strs":body=v.map((s,i)=>`<div class="item" data-li="${i}">${itemTools(k,i,v.length)}${f.area?`<textarea rows="2" ${at(k,i)}>${esc(s)}</textarea>`:`<input type="text" ${at(k,i)} value="${esc(s)}">`}</div>`).join("")+addBtn(k,f,v.length);break;
   case "chips":body=`<div class="chipbox">${v.map((c,i)=>`<span class="chip${i?"":" first"}">${esc(c)}<button type="button" data-act="del" data-k="${k}" data-i="${i}" aria-label="${esc(c)} 빼기">✕</button></span>`).join("")}${v.length<f.max?`<input type="text" class="chipin" data-chipin="${k}" placeholder="입력 후 Enter" aria-label="${esc(lb)} 추가">`:""}</div>`;break;
