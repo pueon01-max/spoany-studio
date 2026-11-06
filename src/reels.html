@@ -7,7 +7,8 @@
 <div class="seg" id="rlTr" role="group" aria-label="장면 전환"></div>
 <label class="chk"><input type="checkbox" id="rlUi" checked> 인스타 릴스 화면처럼 보기 (아이콘·캡션 가림 영역 확인)</label>
 <div class="lab">내보내기</div>
-<div class="go"><button class="btn primary" type="button" id="rlMp4">MP4 영상 저장</button><button class="btn ghost" type="button" id="rlJson">Remotion용 데이터</button><button class="btn ghost" type="button" id="rlStop" hidden>멈추기</button></div>
+<div class="go"><button class="btn primary" type="button" id="rlMp4"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>영상 저장 (MP4)</button><button class="btn ghost" type="button" id="rlStop" hidden>멈추기</button></div>
+<p class="note">인스타에 바로 올릴 수 있는 영상 파일이에요. 토큰은 쓰지 않고 이 기기에서 만들어요.</p>
 <div class="rl-prog" id="rlProg" hidden><i></i></div>
 <div class="status" id="rlStatus" role="status"></div>
 <details class="card2" id="rlCompare"><summary>두 방식 비교 · 어떤 걸 쓸까?</summary>
@@ -15,5 +16,6 @@
   <div><b>브라우저 바로 저장 <small>지금 이 버튼</small></b><ul><li>설치 없이 버튼 하나로 MP4</li><li>720p · 24fps, 장면 3~4개 기준 1~3분</li><li>PC 크롬에서 가장 빨라요 (휴대폰은 느릴 수 있어요)</li><li>음악은 인스타에서 올릴 때 붙이면 돼요</li></ul></div>
   <div><b>Remotion 연결 <small>나중에 확장</small></b><ul><li>PC에 한 번 설치 (Node.js) 후 명령 한 줄로 렌더</li><li>1080p · 30/60fps 고화질, 음악·자막 합성</li><li>숫자 카운트업, 글자 단위 모션 같은 정교한 효과</li><li>여기서 내보낸 데이터를 그대로 읽어서 같은 디자인으로 렌더</li></ul></div>
  </div>
+ <div class="go" style="margin-top:10px"><button class="btn ghost sm" type="button" id="rlJson">Remotion용 데이터 받기 (.json · 영상 아님)</button></div>
  <p class="note">먼저 이 시뮬레이터로 장면 구성과 모션을 정하고, 더 고화질·음악이 필요해지면 Remotion을 연결하는 순서를 추천해요.</p>
 </details>
