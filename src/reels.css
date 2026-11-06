@@ -9,11 +9,17 @@
 .rl-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .rl-head .lab span{letter-spacing:0;text-transform:none;font-weight:500}
 .rl-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.rl-list li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:6px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 4px;background:var(--panel);transition:border-color .15s,box-shadow .15s}
+.rl-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 6px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 4px;background:var(--panel);transition:border-color .15s,box-shadow .15s}
 .rl-list li.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
 .rl-list li.empty{display:block;grid-template-columns:none;border-style:dashed}
 .rl-go{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--ink);cursor:pointer;padding:6px;text-align:left;min-width:0;font:600 13px/1.2 var(--ui)}
+.rl-nm{display:flex;flex-direction:column;gap:3px;min-width:0}
 .rl-go b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl-go b em{font:700 10px/1 var(--ui);font-style:normal;color:var(--accent-ink);background:var(--soft);border-radius:5px;padding:3px 5px;margin-left:6px;vertical-align:1px}
+.rl-go small{font:500 11.5px/1.3 var(--ui);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl-ed{white-space:nowrap}
+.rl-ctl{grid-column:1/-1;display:flex;align-items:center;gap:6px;padding:0 0 2px 38px;flex-wrap:wrap}
+.rl-ctl .iact{margin-left:auto}
 .rl-list select{width:auto;padding:6px 8px;font-size:12.5px;border-radius:9px}
 .rl-prog{height:6px;border-radius:99px;background:var(--field);overflow:hidden;border:1px solid var(--line)}
 .rl-prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
@@ -58,3 +64,23 @@ body[data-tab=reels] :is(.fmts,.subbar,#fit,.hint,#saveStatus,.vhead .go){displa
 @media (prefers-reduced-motion:reduce){.rl-prog i{transition:none}}
 
 .rl-out{display:grid;gap:8px;margin-top:4px}.rl-out video{width:100%;max-width:240px;aspect-ratio:9/16;border-radius:12px;background:#000;border:1px solid var(--line);display:block}
+
+/* 장면 추가 고르기 */
+.rl-pick{border:1px solid var(--accent);border-radius:14px;padding:12px;background:var(--panel);display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 24px rgba(236,5,74,.08)}
+.rl-pk-h b{display:block;font:700 14px/1.3 var(--ui)}.rl-pk-h span{font-size:11.5px;color:var(--muted)}
+.rl-free{display:flex;flex-direction:column;gap:3px;text-align:left;border:1.5px dashed var(--accent);background:var(--soft);color:var(--ink);border-radius:12px;padding:11px 13px;cursor:pointer}
+.rl-free b{font:700 13.5px/1.2 var(--ui);color:var(--accent-ink)}.rl-free small{font-size:11.5px;color:var(--muted);line-height:1.4}
+.rl-pk-g{display:flex;flex-direction:column;gap:6px}.rl-pk-g>span{font:700 11px/1 var(--ui);color:var(--muted);letter-spacing:.02em}
+.rl-pk-g div{display:flex;flex-wrap:wrap;gap:6px}
+.rl-pk-g button{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:999px;padding:8px 12px;font:600 12.5px/1 var(--ui);cursor:pointer}
+.rl-pk-g button:hover,.rl-free:hover{border-color:var(--accent)}
+.rl-pick button.added{animation:rlAdded .6s ease}
+@keyframes rlAdded{0%{background:var(--accent);color:#fff}100%{}}
+/* 릴스 장면 편집 중 안내 바 */
+.scbar{border-radius:14px;padding:12px;background:linear-gradient(135deg,var(--soft),transparent 80%),var(--field);border:1.5px solid var(--accent);display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.scb-t b{display:block;font:700 14px/1.3 var(--ui);color:var(--accent-ink)}.scb-t small{display:block;margin-top:4px;font-size:12px;line-height:1.5;color:var(--muted)}
+.scb-t u{text-decoration:none;font-weight:700;color:var(--ink)}
+.scb-b{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+body.scedit :is(.fmts,#toGallery,.edfoot .chk){display:none!important}
+.cmn{font:700 10px/1 var(--ui);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:3px 5px;margin-left:6px;vertical-align:1px}
+@media (prefers-reduced-motion:reduce){.rl-pick button.added{animation:none}}

@@ -55,8 +55,20 @@ const PH={}; // 사진 id → {o 원본, m 흑백, name, alpha}
 const S={tpl:"reviewCover",fmt:"feed",theme:"light",mono:true,ph:{bg:null,cut:null,bg2:null},c:clone(SAMPLE),
  cat:"all",ftype:"png",res:2,last:{p:"reviewCover",l:"wideInfo",x:"xbanner"}};
 const isSample=k=>JSON.stringify(S.c[k])===SJ[k];
-function cv(k){const sx=T[k]&&T[k].sx;if(!sx)return S.c;const o=Object.assign({},S.c);for(const key in sx)if(isSample(key))o[key]=sx[key];return o;}
-function own(k){const sx=T[S.tpl].sx;if(sx&&k in sx&&isSample(k))S.c[k]=clone(sx[k]);return S.c[k];}
+/* 글 내용 저장 구조
+   S.c = 공통 바탕(전화번호·QR·코치 정보는 여기서만 바뀌어 모든 템플릿·장면에 같이 적용)
+   S.t[템플릿] = 그 템플릿에서만 고친 글 · R.scenes[i].c = 릴스 그 장면에서만 고친 글 */
+const COMMON=new Set(["footnote","qr","name","creds"]);
+S.t={};let ED=null; // ED: 릴스 장면 편집 중이면 {i, prev}
+function baseCv(k){const sx=T[k]&&T[k].sx;if(!sx)return S.c;const o=Object.assign({},S.c);for(const key in sx)if(isSample(key))o[key]=sx[key];return o;}
+function cv(k,sc){return Object.assign({},baseCv(k),S.t[k]||{},sc||{});}
+function sampleOf(k,key){const sx=T[k]&&T[k].sx;return sx&&key in sx?sx[key]:SAMPLE[key];}
+function edScene(){return ED&&R.scenes[ED.i]&&R.scenes[ED.i].k===S.tpl?R.scenes[ED.i]:null;}
+function curV(){const s=edScene();return s?cv(s.k,s.c):cv(S.tpl);}
+function edObj(){const s=edScene();if(s)return s.c||(s.c={});return S.t[S.tpl]||(S.t[S.tpl]={});}
+function own(k){if(COMMON.has(k)){const sx=T[S.tpl].sx;if(sx&&k in sx&&isSample(k))S.c[k]=clone(sx[k]);return S.c[k];}
+ const o=edObj();if(!(k in o))o[k]=clone(curV()[k]);return o[k];}
+function setV(k,v){if(COMMON.has(k))S.c[k]=v;else edObj()[k]=v;}
 
 //@@TEMPLATES
 
@@ -92,6 +104,7 @@ const USES={
  fog:["photoBg","headline"],
  rhythm:["photoBg","photoCut","headline"],
  quote:["headline","sub","kicker"],
+ free:["kicker","headline","sub","bullets","footnote"],
  wideBold:["photoBg","photoCut","kicker","word","headline","cta","footnote"],
  xbannerBold:["photoBg","photoCut","word","headline","offer","cta","footnote","qr"]};
 const F={
@@ -125,7 +138,7 @@ const F={
  zones:{t:"list",l:"공간",max:6,add:"공간 추가",parts:[{p:"label",ph:"공간 이름",w:2},{p:"note",ph:"위치 · 예: 2F",w:1},{p:"value",ph:"설명",w:3}],blank:{label:"",value:"",note:""}},
  team:{t:"list",l:"코치",max:4,add:"코치 추가",parts:[{p:"name",ph:"이름",w:1},{p:"role",ph:"역할",w:2},{p:"tag",ph:"전문 분야·자격",w:3}],blank:{name:"",role:"",tag:""}},
  faq:{t:"list",l:"질문과 답",max:4,add:"질문 추가",parts:[{p:"q",ph:"질문",w:3},{p:"a",ph:"답변",w:3,area:1}],blank:{q:"",a:""}},
- bullets:{t:"strs",l:"불릿",max:3,add:"불릿 추가"},
+ bullets:{t:"strs",l:"불릿",max:5,add:"불릿 추가"},
  conds:{t:"strs",l:"사용 조건",max:4,add:"조건 추가"},
  tips:{t:"strs",l:"팁",max:4,area:1,rich:1,add:"팁 추가"},
  tags:{t:"chips",l:"태그",max:4},
@@ -139,7 +152,7 @@ const F={
  date:{t:"text",l:"날짜"},
  valid:{t:"text",l:"유효기간"},
  code:{t:"text",l:"쿠폰 코드",h:"비우면 안 보여요"}};
-const LBL={
+const LBL={free:{bullets:"포인트 카드 (최대 5개 · 스토리에서 다 보여요)",kicker:"작은 머리말",sub:"설명"},
  coach:{photoBg:"코치 사진",headline:"코치 이름",sub:"한 줄 소개",tags:"전문 분야",metrics:"숫자 3개"},
  review:{photoBg:"후기 사진 (회원 사진)"},review2:{photoBg:"후기 사진 (회원 사진)"},
  reviewCover:{photoCut:"코치 누끼 PNG"},reviewCover2:{photoCut:"코치 누끼 PNG"},wideReview:{photoCut:"코치 누끼 PNG",quotes:"대표 한마디 (첫 번째만 보여요)"},
@@ -158,11 +171,11 @@ const ALLKEYS=Object.keys(F);
 /* ---------- poster ---------- */
 /* 인스타용 글자 키우기: 배열·간격·카드 크기는 원래 그대로 두고 글자만 크기별로 키워요.
    작은 글씨(설명·라벨)는 많이, 큰 헤드라인은 조금만. 사진·누끼·포스터형 템플릿은 원래 그대로. */
-const TS={summary:1,coupon:1,price:1,dday:1,notice:1,schedule:1,faq:1,facility:1,tips:1,routine:1},TSF={feed:1,story:1,square:.6};
+const TS={free:1,summary:1,coupon:1,price:1,dday:1,notice:1,schedule:1,faq:1,facility:1,tips:1,routine:1},TSF={feed:1,story:1,square:.6};
 const tsMul=n=>n<=24?.22:n<=40?.16:n<=64?.12:n<=120?.07:0;
 function scaleText(h,a){const f=n=>{n=+n;return Math.round(n*(1+a*tsMul(n))*10)/10;};
  return h.replace(/font-size:\s*(\d+(?:\.\d+)?)px/g,(_,n)=>`font-size:${f(n)}px`).replace(/(font:\s*(?:\d{3}|normal|bold|italic)\s+)(\d+(?:\.\d+)?)px/g,(_,p,n)=>`${p}${f(n)}px`);}
-function poster(key,fk,exporting){const t=T[key],f=FORMATS[fk];C=cv(key);const dark=(t.m==="bold")||S.theme==="dark";FH=f.h;
+function poster(key,fk,exporting,sc){const t=T[key],f=FORMATS[fk];C=cv(key,sc);const dark=(t.m==="bold")||S.theme==="dark";FH=f.h;
  const a=(TS[key]||0)*(TSF[fk]||0);let inner=t.f(f.h,f.w);if(a)inner=scaleText(inner,a);
  return `<div class="pc${dark?" dark":""}${exporting?" exporting":""}" style="width:${f.w}px;height:${f.h}px${a?`;--tz:${a}`:""}">${inner}<div class="grain"></div></div>`;}
 
@@ -172,7 +185,8 @@ $("#fmts").innerHTML=FGROUPS.map(([g,ks])=>`<span class="gl">${g}</span>`+ks.map
 function pickFor(sh){const t=T[S.tpl];if(t.pair&&t.pair[sh]&&shapeOf(t.pair[sh])===sh)return t.pair[sh];
  const cand=ORDER.filter(k=>shapeOf(k)===sh);return cand.find(k=>T[k].cat===t.cat)||(S.last[sh]&&shapeOf(S.last[sh])===sh?S.last[sh]:cand[0]);}
 function setFmt(fk){if(!FORMATS[fk]||fk===S.fmt)return;const sh=FORMATS[fk].s,old=shapeOf(S.tpl);
- if(old!==sh){S.last[old]=S.tpl;S.tpl=S.last[sh]&&shapeOf(S.last[sh])===sh&&T[S.last[sh]].cat===T[S.tpl].cat?S.last[sh]:pickFor(sh);}
+ if(old!==sh){const from=S.tpl;S.last[old]=S.tpl;S.tpl=S.last[sh]&&shapeOf(S.last[sh])===sh&&T[S.last[sh]].cat===T[S.tpl].cat?S.last[sh]:pickFor(sh);
+  if(S.t[from])S.t[S.tpl]=Object.assign(S.t[S.tpl]||{},clone(S.t[from]));} // 가로·X배너로 바꿔도 고친 글은 따라가요
  S.fmt=fk;afterChange({fields:true,gallery:true});}
 $("#fmts").addEventListener("click",e=>{const b=e.target.closest(".fchip");if(b)setFmt(b.dataset.v);});
 function seg(id,fn){const el=$(id);el.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;fn(b.dataset.v);});}
@@ -184,7 +198,7 @@ function syncControls(){
  $$("#themeSeg button").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.v===S.theme);b.disabled=T[S.tpl].m==="bold";});
  $$("#ftypeSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===S.ftype));
  $$("#resSeg button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.v===S.res));
- const f=FORMATS[S.fmt];$("#fmtDesc").textContent=f.d+(T[S.tpl].m==="bold"?" · 이 템플릿은 다크 고정":"");
+ const f=FORMATS[ED?"story":S.fmt];$("#fmtDesc").textContent=(ED?"릴스 장면 · ":"")+f.d+(T[S.tpl].m==="bold"?" · 이 템플릿은 다크 고정":"");
  $("#saveBtn").textContent=(S.ftype==="jpg"?"JPG":"PNG")+" 저장";
  $("#resNote").textContent=`저장 크기 ${f.w*S.res}×${f.h*S.res}px.`+(S.res>2&&f.s==="x"?" 휴대폰에서는 실패할 수 있어 PC 저장을 권해요.":"");
  $("#aiFmt").textContent=f.n;
@@ -193,13 +207,13 @@ function syncControls(){
 /* ---------- render ---------- */
 let rt,gt;
 function render(){
- const f=FORMATS[S.fmt],fit=$("#fit");
+ const es=edScene(),fk=es?"story":S.fmt,f=FORMATS[fk],fit=$("#fit");
  const narrow=window.innerWidth<900,avail=Math.max(240,fit.clientWidth||600),maxH=narrow?Math.max(200,window.innerHeight*(document.body.classList.contains("pvbig")?.66:.34)):Math.max(420,window.innerHeight-300);
  const sc=Math.min(avail/f.w,maxH/f.h,1);
- fit.innerHTML=`<div class="box" style="width:${Math.round(f.w*sc)}px;height:${Math.round(f.h*sc)}px">${poster(S.tpl,S.fmt)}</div>`;
+ fit.innerHTML=`<div class="box" style="width:${Math.round(f.w*sc)}px;height:${Math.round(f.h*sc)}px">${poster(S.tpl,fk,false,es&&es.c)}</div>`;
  fit.querySelector(".pc").style.transform=`scale(${sc})`;
- $("#tplName").textContent=T[S.tpl].n;
- $("#tplMeta").textContent=`${T[S.tpl].d} · ${f.n}`;
+ $("#tplName").textContent=es?`릴스 ${ED.i+1}번 장면 · ${T[S.tpl].n}`:T[S.tpl].n;
+ $("#tplMeta").textContent=es?`이 장면에만 적용돼요 · ${f.n}`:`${T[S.tpl].d} · ${f.n}`;
  syncControls();shownNotes();}
 function scheduleRender(){clearTimeout(rt);rt=setTimeout(render,90);}
 function scheduleGallery(d){clearTimeout(gt);gt=setTimeout(refreshThumbs,d??500);}
@@ -210,7 +224,7 @@ let rz,lastW=window.innerWidth;window.addEventListener("resize",()=>{clearTimeou
    검색 · 최근 사용 · 분류별 묶음. 썸네일은 화면에 보이는 것만 그려요(빠르게). */
 let RECENT=[];try{RECENT=JSON.parse(localStorage.getItem("spoany.recent")||"[]")}catch(e){}
 function addRecent(k){RECENT=[k,...RECENT.filter(x=>x!==k)].slice(0,8);try{localStorage.setItem("spoany.recent",JSON.stringify(RECENT))}catch(e){}}
-const ALIAS={reviewCover:"후기 리뷰 커버 첫장 표지 코치",review:"후기 리뷰 본문 원문",reviewCover2:"후기 커버 다크",review2:"후기 본문 매거진 인용",beforeAfter:"비포 애프터 변화 몸 기록 다이어트",summary:"이벤트 요약 숫자 혜택",coupon:"쿠폰 체험권 할인 무료",price:"가격 가격표 회원권 요금",rings:"챌린지 출석 진행률 링",dday:"디데이 카운트다운 마감 오픈",notice:"공지 휴관 운영시간 안내 명절",schedule:"시간표 GX 수업 요가 필라테스",faq:"질문 FAQ 문의 처음",facility:"시설 공간 존 안내 오리엔테이션",coach:"코치 트레이너 소개 강사",team:"코치진 트레이너 팀 라인업",routine:"루틴 운동 순서 세트 상체 하체 바디맵",tips:"꿀팁 정보 카드뉴스 방법 안내 시리즈",mono:"모노 흑백 컨디션 링",muscle:"근육 부위 PT 바디맵 앱",lift:"GYM TIME 짐타임 캠페인 기구",move:"MOVE 무브 캠페인 인물",fog:"포그 티저 오픈 유리",rhythm:"리듬 타이포 저장",quote:"한 문장 명언 슬로건 한마디",wideReview:"가로 후기 블로그 썸네일",wideInfo:"가로 혜택 TV",widePrice:"가로 가격표 TV",wideNotice:"가로 공지 TV 키오스크",wideBold:"가로 캠페인 유튜브",xbanner:"X배너 입구 배너 인쇄",xbannerBold:"X배너 캠페인 인쇄"};
+const ALIAS={free:"직접 쓰기 빈 페이지 자유 텍스트 메모 없을때 새로",reviewCover:"후기 리뷰 커버 첫장 표지 코치",review:"후기 리뷰 본문 원문",reviewCover2:"후기 커버 다크",review2:"후기 본문 매거진 인용",beforeAfter:"비포 애프터 변화 몸 기록 다이어트",summary:"이벤트 요약 숫자 혜택",coupon:"쿠폰 체험권 할인 무료",price:"가격 가격표 회원권 요금",rings:"챌린지 출석 진행률 링",dday:"디데이 카운트다운 마감 오픈",notice:"공지 휴관 운영시간 안내 명절",schedule:"시간표 GX 수업 요가 필라테스",faq:"질문 FAQ 문의 처음",facility:"시설 공간 존 안내 오리엔테이션",coach:"코치 트레이너 소개 강사",team:"코치진 트레이너 팀 라인업",routine:"루틴 운동 순서 세트 상체 하체 바디맵",tips:"꿀팁 정보 카드뉴스 방법 안내 시리즈",mono:"모노 흑백 컨디션 링",muscle:"근육 부위 PT 바디맵 앱",lift:"GYM TIME 짐타임 캠페인 기구",move:"MOVE 무브 캠페인 인물",fog:"포그 티저 오픈 유리",rhythm:"리듬 타이포 저장",quote:"한 문장 명언 슬로건 한마디",wideReview:"가로 후기 블로그 썸네일",wideInfo:"가로 혜택 TV",widePrice:"가로 가격표 TV",wideNotice:"가로 공지 TV 키오스크",wideBold:"가로 캠페인 유튜브",xbanner:"X배너 입구 배너 인쇄",xbannerBold:"X배너 캠페인 인쇄"};
 const norm=s=>String(s||"").toLowerCase().replace(/\s+/g,"");
 function matchQ(k,q){if(!q)return true;const hay=norm(T[k].n+T[k].d+(ALIAS[k]||"")+((CATS.find(c=>c[0]===T[k].cat)||[])[1]||""));return norm(q).split(/[,·]/).filter(Boolean).every(w=>hay.includes(w));}
 let gIO=null,gDirty=new Set();
@@ -237,7 +251,7 @@ function refreshThumbs(){if($("#tab-gallery").hidden)return;$$("#thumbs .thumb")
 $("#cats").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.cat=b.dataset.v;$("#tplSearch").value="";$("#tplClear").hidden=true;renderGallery();});
 let sq;$("#tplSearch").addEventListener("input",()=>{$("#tplClear").hidden=!$("#tplSearch").value;clearTimeout(sq);sq=setTimeout(renderGallery,120);});
 $("#tplClear").addEventListener("click",()=>{$("#tplSearch").value="";$("#tplClear").hidden=true;renderGallery();$("#tplSearch").focus();});
-$("#thumbs").addEventListener("click",e=>{const b=e.target.closest(".thumb");if(!b)return;S.tpl=b.dataset.k;S.last[shapeOf(S.tpl)]=S.tpl;addRecent(S.tpl);$$("#thumbs .thumb").forEach(x=>x.setAttribute("aria-pressed",x.dataset.k===S.tpl));afterChange({fields:true,noGallery:true});if(isNarrow())window.scrollTo({top:0,behavior:"smooth"});});
+$("#thumbs").addEventListener("click",e=>{const b=e.target.closest(".thumb");if(!b)return;if(ED)edExit(true);S.tpl=b.dataset.k;S.last[shapeOf(S.tpl)]=S.tpl;addRecent(S.tpl);$$("#thumbs .thumb").forEach(x=>x.setAttribute("aria-pressed",x.dataset.k===S.tpl));afterChange({fields:true,noGallery:true});if(isNarrow())window.scrollTo({top:0,behavior:"smooth"});});
 $("#toEdit").addEventListener("click",()=>selectTab("edit"));
 $("#toGallery").addEventListener("click",()=>selectTab("gallery"));
 
@@ -245,7 +259,7 @@ $("#toGallery").addEventListener("click",()=>selectTab("gallery"));
 const isNarrow=()=>window.innerWidth<900;
 // 휴대폰: 위에 고정된 미리보기 바로 아래로 패널 시작점을 맞춰요
 function panelTop(){if(!isNarrow())return;requestAnimationFrame(()=>{const p=$(".panel"),st=$(".stage");if(!p)return;const y=p.getBoundingClientRect().top+window.scrollY-(st?st.offsetHeight:0)-6;window.scrollTo({top:Math.max(0,y),behavior:"smooth"});});}
-function selectTab(id){$$(".tabs button").forEach(b=>{const on=b.dataset.tab===id;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
+function selectTab(id){if(ED&&id!=="edit"&&id!=="ai")edExit();$$(".tabs button").forEach(b=>{const on=b.dataset.tab===id;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
  $$("#bnav button[data-tab]").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===id?"page":"false"));
  $$(".tabpanel").forEach(p=>p.hidden=p.id!=="tab-"+id);document.body.dataset.tab=id;
  if(id==="gallery")renderGallery();if(isNarrow()&&id!=="reels")render();if(typeof onTab==="function")onTab(id);}
@@ -269,7 +283,7 @@ function photoHTML(k,f,lb){const sl=f.slot,id=S.ph[sl],mine=id&&PH[id],def=DEFP[
  const thumb=mine?`background-image:url('${PH[id].o}')`:def?`background-image:${def}`:"";
  const monoUI=sl!=="cut"&&MONO_AUTO.includes(S.tpl)?`<label class="chk" style="margin-top:6px"><input type="checkbox" data-act="mono" ${S.mono?"checked":""}> 흑백·대비 보정</label>`:sl!=="cut"&&MONO_ALWAYS.includes(S.tpl)?`<small>이 템플릿에서는 흑백으로 바뀌어요</small>`:"";
  return `<div class="fld" data-fk="${k}"><div class="fhead"><span class="fl">${esc(lb)}</span></div>${f.h&&cut?`<p class="fh">${esc(f.h)}</p>`:""}<div class="phf"><span class="pthumb${cut?" cut":""}" style="${thumb}">${mine||def?"":"없음"}</span><div class="pinfo"><b>${mine?esc(PH[id].name||"올린 사진"):def?"기본 예시 사진":"사진 없음 · 기본 그래픽"}</b><small>${cut?"투명 배경 PNG·WEBP":"JPG·PNG · 회원 얼굴은 미리 블러 처리"}</small><div class="go" style="gap:8px;margin-top:6px"><label class="btn ghost sm phbtn">${mine?"다른 사진으로":"사진 올리기"}<input type="file" data-photo="${sl}" accept="${cut?"image/png,image/webp":"image/*"}"></label>${mine?`<button type="button" class="x" data-act="phreset" data-slot="${sl}">${def?"기본 사진으로":"사진 빼기"}</button>`:""}</div>${monoUI}</div></div></div>`;}
-function fieldHTML(k){const f=F[k],V=cv(S.tpl),v=V[k],lb=(LBL[S.tpl]&&LBL[S.tpl][k])||f.l,id="f_"+k;let body="",head="";
+function fieldHTML(k){const f=F[k],V=curV(),v=V[k],lb=(LBL[S.tpl]&&LBL[S.tpl][k])||f.l,id="f_"+k;let body="",head="";
  if(f.t==="photo")return photoHTML(k,f,lb);
  switch(f.t){
   case "text":body=`<input type="text" id="${id}" ${at(k)} value="${esc(v)}">`;break;
@@ -283,7 +297,7 @@ function fieldHTML(k){const f=F[k],V=cv(S.tpl),v=V[k],lb=(LBL[S.tpl]&&LBL[S.tpl]
   case "muscle":body=`<div class="mus">${MUSCLES.map(m=>{const on=v.some(c=>c.label===m&&c.on);return `<button type="button" data-act="mus" data-k="${k}" data-v="${m}" aria-pressed="${on}">${on?"✓ ":""}${m}</button>`}).join("")}</div>`;break;}
  if(f.fit){const m=meterTxt(v);head+=`<span class="meter${m.warn?" warn":""}" id="m_${k}">${m.t}</span>`;}
  if(f.rich)head+=etb(k);
- return `<div class="fld" data-fk="${k}"><div class="fhead"><label class="fl"${["text","area","num"].includes(f.t)?` for="${id}"`:""}>${esc(lb)}</label>${head}</div>${f.h?`<p class="fh">${esc(f.h)}</p>`:""}${body}</div>`;}
+ return `<div class="fld" data-fk="${k}"><div class="fhead"><label class="fl"${["text","area","num"].includes(f.t)?` for="${id}"`:""}>${esc(lb)}${COMMON.has(k)?`<span class="cmn" title="전화번호·QR·코치 정보는 모든 템플릿과 릴스 장면에 같이 바뀌어요">공통</span>`:""}</label>${head}</div>${f.h?`<p class="fh">${esc(f.h)}</p>`:""}${body}</div>`;}
 const MUSCLES=["어깨","가슴","등","삼두","이두","복근","하체"];
 function buildFields(){edTpl=S.tpl;const keys=S.all?ALLKEYS:(USES[S.tpl]||[]);const y=$("#fields").scrollTop;
  $("#edName").textContent=T[S.tpl].n;$("#edCount").textContent=S.all?`모든 항목 ${keys.length}개`:`이 템플릿에 쓰는 항목 ${keys.length}개 · 미리보기 순서`;
@@ -291,15 +305,15 @@ function buildFields(){edTpl=S.tpl;const keys=S.all?ALLKEYS:(USES[S.tpl]||[]);co
  // 항목 바로가기: 누르면 그 칸으로 이동
  const lbOf=k=>String((LBL[S.tpl]&&LBL[S.tpl][k])||F[k].l).replace(/\s*\(.*\)\s*$/,"");
  $("#jump").innerHTML=keys.map(k=>`<button type="button" data-jk="${k}">${esc(lbOf(k))}</button>`).join("");
- const ex=(USES[S.tpl]||[]).some(k=>F[k].t!=="photo"&&isSample(k));$("#sampleNote").textContent=ex?"처음 내용은 예시예요. 실제 정보로 바꿔 주세요.":"";}
+ const V0=curV(),ex=(USES[S.tpl]||[]).some(k=>F[k].t!=="photo"&&JSON.stringify(V0[k])===JSON.stringify(sampleOf(S.tpl,k)));$("#sampleNote").textContent=ex?"처음 내용은 예시예요. 실제 정보로 바꿔 주세요.":"";}
 function shownNotes(){$$("#fields .fld").forEach(fl=>{const k=fl.dataset.fk,f=F[k];if(!f||(f.t!=="list"&&f.t!=="strs"))return;
- const ids=new Set([...$("#fit").querySelectorAll(`[data-f="${k}"][data-i]`)].map(e=>e.dataset.i)),n=(cv(S.tpl)[k]||[]).length;
+ const ids=new Set([...$("#fit").querySelectorAll(`[data-f="${k}"][data-i]`)].map(e=>e.dataset.i)),n=(curV()[k]||[]).length;
  let note=fl.querySelector(".cnt");if(ids.size&&ids.size<n){if(!note){note=document.createElement("p");note.className="fh cnt";fl.querySelector(".fhead").after(note);}note.textContent=`이 포맷 미리보기에는 앞의 ${ids.size}개만 보여요.`;}else if(note)note.remove();});}
 $("#fields").addEventListener("input",e=>{const el=e.target,k=el.dataset.k;if(!k||!F[k])return;const f=F[k],i=el.dataset.i,p=el.dataset.p,v=el.value;
  if(f.t==="list"){const it=own(k)[+i];if(f.star&&p==="label")it.label=(isStar(it)?"*":"")+v;else it[p]=v;}
  else if(f.t==="strs")own(k)[+i]=v;
  else if(f.t==="obj"){own(k)[p]=p==="progress"?+v:v;if(p==="progress"){const o=el.parentElement.querySelector("output");if(o)o.textContent=v+"%";}}
- else S.c[k]=v;
+ else setV(k,v);
  if(f.fit){const m=meterTxt(v),me=$("#m_"+k);if(me){me.textContent=m.t;me.classList.toggle("warn",m.warn);}}
  scheduleRender();scheduleGallery(700);commit();});
 function emph(el,on,fl){const v=el.value;
@@ -318,13 +332,13 @@ $("#fields").addEventListener("click",e=>{const b=e.target.closest("[data-act]")
  else if(act==="del")own(k).splice(i,1);
  else if(act==="up"||act==="down")moveIt(own(k),i,act==="up"?-1:1);
  else if(act==="star"){const r=own(k)[i];r.label=isStar(r)?r.label.slice(1):"*"+r.label;}
- else if(act==="rate")S.c[k]=b.dataset.v;
- else if(act==="inc"||act==="dec"){const cur=parseInt(cv(S.tpl)[k])||f.min;S.c[k]=String(Math.max(f.min,Math.min(f.max,cur+(act==="inc"?1:-1))));}
+ else if(act==="rate")setV(k,b.dataset.v);
+ else if(act==="inc"||act==="dec"){const cur=parseInt(curV()[k])||f.min;setV(k,String(Math.max(f.min,Math.min(f.max,cur+(act==="inc"?1:-1)))));}
  else if(act==="phreset"){S.ph[b.dataset.slot]=null;}
  else if(act==="mus"){const m=b.dataset.v,a=own(k),c=a.find(x=>x.label===m);if(c)c.on=!c.on;else a.push({label:m,on:true});a.sort((x,y)=>MUSCLES.indexOf(x.label)-MUSCLES.indexOf(y.label));}
  else return;
  buildFields();render();scheduleGallery();commit();
- if(act==="add"){const n=S.c[k].length-1,el=$("#fields").querySelector(`[data-k="${k}"][data-i="${n}"]:is(input,textarea)`);if(el)el.focus();}
+ if(act==="add"){const n=curV()[k].length-1,el=$("#fields").querySelector(`[data-k="${k}"][data-i="${n}"]:is(input,textarea)`);if(el)el.focus();}
  else if(act==="up"||act==="down"){const j=i+(act==="up"?-1:1),el=$("#fields").querySelector(`button[data-act="${act}"][data-k="${k}"][data-i="${j}"]`);if(el&&!el.disabled)el.focus();}});
 $("#fields").addEventListener("keydown",e=>{const k=e.target.dataset&&e.target.dataset.chipin;if(!k||e.isComposing)return;
  if(e.key==="Enter"||e.key===","){e.preventDefault();const v=e.target.value.trim().replace(/,$/,"");if(!v)return;const a=own(k);if(a.length<F[k].max)a.push(v);buildFields();render();scheduleGallery();commit();const n=$(`[data-chipin="${k}"]`);if(n)n.focus();}
@@ -372,13 +386,15 @@ async function putPhoto(id,rec){if(PH[id])return;const [o,m]=await makeMono(rec.
 const DB={p:null,open(){if(!this.p)this.p=new Promise((res,rej)=>{try{const r=indexedDB.open("spoany-studio",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e)}});return this.p;},
  async get(k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
  async set(k,v){const db=await this.open();return new Promise((res,rej)=>{const t=db.transaction("kv","readwrite");t.objectStore("kv").put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}};
-const snapObj=()=>({tpl:S.tpl,fmt:S.fmt,theme:S.theme,mono:S.mono,ph:Object.assign({},S.ph),c:S.c});
+const snapObj=()=>({tpl:ED?ED.prev:S.tpl,fmt:S.fmt,theme:S.theme,mono:S.mono,ph:Object.assign({},S.ph),c:S.c,t:S.t,rs:R.scenes});
 const snap=()=>JSON.stringify(snapObj());
 function photosOf(ph){const o={};Object.values(ph||{}).forEach(id=>{if(id&&PH[id])o[id]={o:PH[id].o,name:PH[id].name,alpha:PH[id].alpha};});return o;}
 async function applySnap(o,photos){if(photos)for(const id in photos){try{await putPhoto(id,photos[id]);}catch(e){}}phCss();
  S.tpl=T[o.tpl]?o.tpl:S.tpl;S.fmt=FORMATS[o.fmt]?o.fmt:S.fmt;if(shapeOf(S.tpl)!==FORMATS[S.fmt].s)S.tpl=ORDER.find(k=>shapeOf(k)===FORMATS[S.fmt].s);
  S.theme=o.theme==="dark"?"dark":"light";S.mono=o.mono!==false;S.ph={bg:null,cut:null,bg2:null};for(const sl in S.ph){const id=o.ph&&o.ph[sl];S.ph[sl]=id&&PH[id]?id:null;}
- S.c=Object.assign(clone(SAMPLE),o.c||{});}
+ S.c=Object.assign(clone(SAMPLE),o.c||{});S.t=o.t&&typeof o.t==="object"?clone(o.t):{};
+ if(Array.isArray(o.rs)){R.scenes=clone(o.rs).filter(s=>s&&T[s.k]&&shapeOf(s.k)==="p");rSave();}
+ if(ED){if(R.scenes[ED.i]){ED.prev=S.tpl;S.tpl=R.scenes[ED.i].k;}else{ED=null;document.body.classList.remove("scedit");}}}
 let svT,canStore=true;
 function autosave(){clearTimeout(svT);svT=setTimeout(async()=>{if(!canStore)return;try{await DB.set("autosave",{v:3,at:Date.now(),snap:snapObj(),photos:photosOf(S.ph)});
  const d=new Date();$("#savedMeta").textContent=`자동 저장됨 ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;}
@@ -386,11 +402,11 @@ function autosave(){clearTimeout(svT);svT=setTimeout(async()=>{if(!canStore)retu
 
 /* ---------- history (되돌리기) ---------- */
 const H={st:[],i:-1};let ct=null;
-function commitNow(){ct=null;const s=snap();if(H.st[H.i]===s)return;H.st=H.st.slice(0,H.i+1);H.st.push(s);if(H.st.length>100)H.st.shift();H.i=H.st.length-1;histUI();autosave();}
+function commitNow(){ct=null;if(ED)rSave();const s=snap();if(H.st[H.i]===s)return;H.st=H.st.slice(0,H.i+1);H.st.push(s);if(H.st.length>100)H.st.shift();H.i=H.st.length-1;histUI();autosave();}
 function commit(){clearTimeout(ct);ct=setTimeout(commitNow,400);}
 function flush(){if(ct){clearTimeout(ct);commitNow();}}
 function histUI(){$("#undoBtn").disabled=H.i<=0;$("#redoBtn").disabled=H.i>=H.st.length-1;}
-async function restoreSnap(s){await applySnap(JSON.parse(s));buildFields();render();renderGallery();histUI();autosave();}
+async function restoreSnap(s){await applySnap(JSON.parse(s));buildFields();render();renderGallery();histUI();autosave();if(document.body.dataset.tab==="reels"){rlPanel();rvBuild();}scBarUI();}
 function undo(){flush();if(H.i<=0)return;H.i--;restoreSnap(H.st[H.i]);}
 function redo(){flush();if(H.i>=H.st.length-1)return;H.i++;restoreSnap(H.st[H.i]);}
 $("#undoBtn").addEventListener("click",undo);$("#redoBtn").addEventListener("click",redo);
@@ -402,7 +418,7 @@ document.addEventListener("keydown",e=>{
 
 /* ---------- 보관함 ---------- */
 function toggleDrawer(on){const d=$("#drawer");on=on??d.hidden;d.hidden=!on;$("#boxBtn").setAttribute("aria-expanded",on);if(on){listDrafts();const n=$("#draftName");n.value=defaultName();n.focus();n.select();}}
-function defaultName(){return `${lines(cv(S.tpl).headline||"")[0]||T[S.tpl].n} · ${T[S.tpl].n}`.slice(0,40);}
+function defaultName(){return `${lines(curV().headline||"")[0]||T[S.tpl].n} · ${T[S.tpl].n}`.slice(0,40);}
 $("#boxBtn").addEventListener("click",()=>toggleDrawer());$("#drawerClose").addEventListener("click",()=>toggleDrawer(false));
 async function getDrafts(){try{return (await DB.get("drafts"))||[]}catch(e){return null}}
 async function listDrafts(){const L=await getDrafts(),box=$("#draftList");
@@ -417,7 +433,7 @@ $("#draftList").addEventListener("click",async e=>{const b=e.target.closest("[da
  else if(b.dataset.dact==="delno")listDrafts();});
 $("#newWrap").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const w=$("#newWrap");
  if(b.id==="newBtn")w.innerHTML=`<div class="confirm">지금 화면 내용이 예시로 바뀌어요. 필요하면 먼저 보관해 두세요. <button class="btn primary sm" type="button" id="newYes">새로 시작</button><button class="x" type="button" id="newNo">취소</button></div>`;
- else if(b.id==="newYes"){flush();S.c=clone(SAMPLE);S.ph={bg:null,cut:null,bg2:null};S.theme="light";S.mono=true;buildFields();render();renderGallery();commitNow();toggleDrawer(false);selectTab("gallery");setSaveStatus("예시 내용으로 새로 시작했어요. 되돌리기로 돌아갈 수 있어요.");}
+ else if(b.id==="newYes"){flush();if(ED)edExit(true);S.c=clone(SAMPLE);S.t={};S.ph={bg:null,cut:null,bg2:null};S.theme="light";S.mono=true;buildFields();render();renderGallery();commitNow();toggleDrawer(false);selectTab("gallery");setSaveStatus("예시 내용으로 새로 시작했어요. 되돌리기로 돌아갈 수 있어요.");}
  if(b.id!=="newBtn")w.innerHTML=`<button class="btn ghost sm" type="button" id="newBtn">예시 내용으로 새로 시작</button>`;});
 
 //@@PLATFORM
@@ -451,7 +467,7 @@ ${tdesc}
 ${fieldSchema()}
 
 현재 내용(JSON):
-${JSON.stringify(Object.assign({template:S.tpl},cv(S.tpl)))}
+${JSON.stringify(Object.assign({template:S.tpl},curV()))}
 
 요청: ${req}
 
@@ -460,7 +476,7 @@ function cleanVal(k,v){const f=F[k],str=(x,n)=>String(x??"").slice(0,n||200);
  switch(f.t){case "text":case "area":return (typeof v==="string"||typeof v==="number")?str(v,k==="review"?900:240):undefined;
   case "num":{const n=parseInt(v);return isNaN(n)?undefined:String(Math.max(f.min,Math.min(f.max,n)));}
   case "rating":{const n=Math.round(+v);return n>=1&&n<=5?String(n):undefined;}
-  case "obj":{if(!v||typeof v!=="object")return;const o=Object.assign({},cv(S.tpl)[k]);f.parts.forEach(p=>{if(v[p.p]!=null)o[p.p]=p.range?Math.max(0,Math.min(100,+v[p.p]||0)):str(v[p.p]);});return o;}
+  case "obj":{if(!v||typeof v!=="object")return;const o=Object.assign({},curV()[k]);f.parts.forEach(p=>{if(v[p.p]!=null)o[p.p]=p.range?Math.max(0,Math.min(100,+v[p.p]||0)):str(v[p.p]);});return o;}
   case "list":if(!Array.isArray(v))return;return v.slice(0,f.max).map(it=>{const o={};f.parts.forEach(p=>o[p.p]=str(it&&it[p.p]));return o;});
   case "strs":case "chips":if(!Array.isArray(v))return;return v.slice(0,f.max).map(x=>str(x,120));
   case "muscle":if(!Array.isArray(v))return;return v.slice(0,7).filter(x=>x&&MUSCLES.includes(x.label)).map(x=>({label:x.label,on:!!x.on}));}}
@@ -471,8 +487,8 @@ $("#askForm").addEventListener("submit",async e=>{e.preventDefault();
  const req=$("#prompt").value.trim();if(!req){$("#prompt").focus();return;}
  flush();ctl=new AbortController();$("#goBtn").disabled=true;$("#stopBtn").hidden=false;setStatus("Claude가 카피와 레이아웃을 짜는 중… (보통 10~40초)");
  try{const o=await PLATFORM.ask(buildPrompt(req),{signal:ctl.signal});if(!o||typeof o!=="object")throw{code:"bad"};
-  let n=0;for(const k in o){if(!F[k]||F[k].t==="photo")continue;const v=cleanVal(k,o[k]);if(v!==undefined){S.c[k]=v;n++;}}
-  if(T[o.template]&&shapeOf(o.template)===FORMATS[S.fmt].s){S.tpl=o.template;S.last[shapeOf(S.tpl)]=S.tpl;}
+  if(!ED&&T[o.template]&&shapeOf(o.template)===FORMATS[S.fmt].s){S.tpl=o.template;S.last[shapeOf(S.tpl)]=S.tpl;}
+  let n=0;for(const k in o){if(!F[k]||F[k].t==="photo")continue;const v=cleanVal(k,o[k]);if(v!==undefined){setV(k,v);n++;}}
   buildFields();render();renderGallery();commitNow();setStatus(`완성 — ${T[S.tpl].n} 템플릿, ${n}개 칸을 채웠어요. '내용 편집'에서 고치거나 되돌리기로 돌아갈 수 있어요.`,"ok");}
  catch(err){setStatus(ERR[err&&err.code]||"제작하지 못했어요. 요청을 조금 더 구체적으로 써서 다시 시도해 주세요.","err");}
  finally{$("#goBtn").disabled=false;$("#stopBtn").hidden=true;}});
@@ -483,7 +499,7 @@ function togglePop(on){const p=$("#saveOpts");on=on??p.hidden;p.hidden=!on;$("#s
 $("#saveOpt").addEventListener("click",e=>{e.stopPropagation();togglePop();});
 document.addEventListener("click",e=>{if(!$("#saveOpts").hidden&&!e.target.closest(".savewrap"))togglePop(false);if(!$("#drawer").hidden&&!e.target.closest("#drawer")&&!e.target.closest("#boxBtn"))toggleDrawer(false);});
 function dataURLtoBlob(u){const [h,b]=u.split(","),mime=(h.match(/:(.*?);/)||[])[1]||"image/png",bin=atob(b),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:mime});}
-async function renderBlob(pr){const f=FORMATS[S.fmt],ex=$("#exp");ex.innerHTML=poster(S.tpl,S.fmt,true);const node=ex.firstElementChild;
+async function renderBlob(pr){const es=edScene(),fk=es?"story":S.fmt,f=FORMATS[fk],ex=$("#exp");ex.innerHTML=poster(S.tpl,fk,true,es&&es.c);const node=ex.firstElementChild;
  try{await document.fonts.ready;
   if(window.htmlToImage){const opt={width:f.w,height:f.h,pixelRatio:pr,cacheBust:false};
    if(S.ftype==="jpg"){opt.backgroundColor="#ffffff";opt.quality=.92;await htmlToImage.toJpeg(node,opt);return dataURLtoBlob(await htmlToImage.toJpeg(node,opt));}
@@ -495,8 +511,8 @@ function stamp(){const d=new Date();return `${String(d.getFullYear()).slice(2)}$
 $("#saveBtn").addEventListener("click",async()=>{if(PLATFORM.canSave&&!PLATFORM.canSave())return;togglePop(false);const b=$("#saveBtn");b.disabled=true;setSaveStatus("이미지를 그리는 중…");
  let pr=S.res,blob=null,note="";
  try{blob=await renderBlob(pr);}catch(e){if(pr>2){pr=2;note=" 큰 사이즈가 이 기기에서 실패해서 2배로 저장했어요.";try{blob=await renderBlob(pr);}catch(e2){blob=null}}}
- try{if(!blob)throw{code:"render"};const f=FORMATS[S.fmt],ext=S.ftype==="jpg"?"jpg":"png";
-  await PLATFORM.save(blob,`spoany_${S.tpl}_${S.fmt}_${stamp()}.${ext}`);setSaveStatus(`저장했어요 · ${f.w*pr}×${f.h*pr}px ${ext.toUpperCase()}.${note} 유리 블러 같은 일부 효과는 조금 단순하게 나올 수 있어요.`,"ok");}
+ try{if(!blob)throw{code:"render"};const fk=edScene()?"story":S.fmt,f=FORMATS[fk],ext=S.ftype==="jpg"?"jpg":"png";
+  await PLATFORM.save(blob,`spoany_${S.tpl}_${fk}_${stamp()}.${ext}`);setSaveStatus(`저장했어요 · ${f.w*pr}×${f.h*pr}px ${ext.toUpperCase()}.${note} 유리 블러 같은 일부 효과는 조금 단순하게 나올 수 있어요.`,"ok");}
  catch(e){setSaveStatus(e&&e.code==="declined"?"저장을 취소했어요.":e&&e.code==="render"?"이미지를 만들지 못했어요. 사진 크기를 줄이거나 다른 브라우저에서 시도해 주세요.":"저장하지 못했어요. 다시 시도해 주세요.","err");}
  finally{b.disabled=false;}});
 function textOf(k,v){const f=F[k];if(!f||f.t==="photo"||v==null)return "";
@@ -504,7 +520,7 @@ function textOf(k,v){const f=F[k];if(!f||f.t==="photo"||v==null)return "";
   case "list":return v.map(it=>f.parts.map(p=>plain(it[p.p])).filter(Boolean).join(" · ")).join("\n");
   case "strs":case "chips":return v.map(plain).join("\n");case "muscle":return v.filter(x=>x.on).map(x=>x.label).join(", ");
   case "rating":return "별점 "+v+".0";default:return plain(v);}}
-$("#copyBtn").addEventListener("click",async()=>{const V=cv(S.tpl),t=(USES[S.tpl]||[]).map(k=>textOf(k,V[k])).filter(Boolean).join("\n\n");
+$("#copyBtn").addEventListener("click",async()=>{const V=curV(),t=(USES[S.tpl]||[]).map(k=>textOf(k,V[k])).filter(Boolean).join("\n\n");
  try{await navigator.clipboard.writeText(t);setSaveStatus("이 템플릿의 문구를 복사했어요. 인스타 본문이나 블로그에 붙여넣으세요.","ok");}catch(e){setSaveStatus(t);}});
 
 /* ---------- init ---------- */

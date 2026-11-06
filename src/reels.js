@@ -1,10 +1,10 @@
 /* ---------- 릴스 시뮬레이터 (시험판) ----------
    템플릿을 스토리(1080×1920) 장면으로 이어 붙이고 Web Animations로 모션을 줘요.
    같은 타임라인을 미리보기·MP4 저장(WebCodecs)·Remotion 데이터에 공통으로 써요. */
-const RM={rise:"올라오기",pop:"튀어나오기",blur:"선명하게"},RT={fade:"페이드",slide:"슬라이드",zoom:"줌",punch:"펀치"};
+const RM={hl:"하나씩 강조",rise:"올라오기",pop:"튀어나오기",blur:"선명하게"},RT={fade:"페이드",slide:"슬라이드",zoom:"줌",punch:"펀치"};
 const RPRE=[["후기 릴스",["reviewCover","review","review2","coupon"]],["이벤트 릴스",["summary","dday","price","coupon"]],["공지 릴스",["notice","schedule","faq"]],["코치 소개 릴스",["coach","routine","muscle","quote"]],["무드 릴스",["move","lift","rhythm","fog"]]];
 const RW=1080,RH=1920,TR=450;
-let R={scenes:RPRE[0][1].map(k=>({k,d:3,m:"rise"})),tr:"slide",ui:true};
+let R={scenes:RPRE[0][1].map(k=>({k,d:3,m:"hl"})),tr:"slide",ui:true};
 try{const o=JSON.parse(localStorage.getItem("spoany.reels")||"null");if(o&&Array.isArray(o.scenes))R=Object.assign(R,o);}catch(e){}
 R.scenes=R.scenes.filter(s=>T[s.k]&&shapeOf(s.k)==="p");
 const rSave=()=>{try{localStorage.setItem("spoany.reels",JSON.stringify(R))}catch(e){}};
@@ -16,17 +16,35 @@ function rlPanel(){
  $("#rlPresets").innerHTML=RPRE.map(([n],i)=>`<button type="button" data-p="${i}">${n}</button>`).join("");
  $("#rlTr").innerHTML=Object.entries(RT).map(([k,n])=>`<button type="button" data-v="${k}" aria-pressed="${R.tr===k}">${n}</button>`).join("");
  $("#rlUi").checked=R.ui;$("#rlCount").textContent=`${R.scenes.length}개 · ${(rTotal()/1000).toFixed(0)}초`;
- $("#rlList").innerHTML=R.scenes.length?R.scenes.map((s,i)=>`<li data-i="${i}"><button type="button" class="rl-go" data-act="go" title="이 장면부터 보기"><span class="inum">${String(i+1).padStart(2,"0")}</span><b>${esc(T[s.k].n)}</b></button>
-  <select data-act="d" aria-label="${i+1}번 장면 길이">${[2,3,4,5,6].map(v=>`<option value="${v}"${v===s.d?" selected":""}>${v}초</option>`).join("")}</select>
+ $("#rlList").innerHTML=R.scenes.length?R.scenes.map((s,i)=>{const own=s.c&&Object.keys(s.c).length;return `<li data-i="${i}"><button type="button" class="rl-go" data-act="go" title="이 장면부터 보기"><span class="inum">${String(i+1).padStart(2,"0")}</span><span class="rl-nm"><b>${esc(T[s.k].n)}${own?`<em>이 장면만 수정됨</em>`:""}</b><small>${esc(snipOf(s))}</small></span></button>
+  <button type="button" class="btn ghost sm rl-ed" data-act="edit" aria-label="${i+1}번 장면 글 편집">✎ 편집</button>
+  <div class="rl-ctl"><select data-act="d" aria-label="${i+1}번 장면 길이">${[2,3,4,5,6].map(v=>`<option value="${v}"${v===s.d?" selected":""}>${v}초</option>`).join("")}</select>
   <select data-act="m" aria-label="${i+1}번 장면 모션">${Object.entries(RM).map(([k,n])=>`<option value="${k}"${k===s.m?" selected":""}>${n}</option>`).join("")}</select>
-  <span class="iact"><button type="button" class="mini" data-act="up" aria-label="위로"${i?"":" disabled"}>↑</button><button type="button" class="mini" data-act="down" aria-label="아래로"${i<R.scenes.length-1?"":" disabled"}>↓</button><button type="button" class="mini del" data-act="del" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="empty">장면이 없어요. 빠른 시작을 누르거나 지금 템플릿을 추가해 주세요.</li>`;}
-function rlChanged(){rSave();rlPanel();rvBuild();rlMeta();}
-$("#rlPresets").addEventListener("click",e=>{const b=e.target.closest("button[data-p]");if(!b)return;R.scenes=RPRE[+b.dataset.p][1].map(k=>({k,d:3,m:"rise"}));rlChanged();rvPlay(true);});
+  <span class="iact"><button type="button" class="mini" data-act="up" aria-label="위로"${i?"":" disabled"}>↑</button><button type="button" class="mini" data-act="down" aria-label="아래로"${i<R.scenes.length-1?"":" disabled"}>↓</button><button type="button" class="mini" data-act="dup" aria-label="복제">⧉</button><button type="button" class="mini del" data-act="del" aria-label="삭제">✕</button></span></div></li>`}).join(""):`<li class="empty">장면이 없어요. 빠른 시작을 누르거나 ‘+ 장면 추가’로 페이지를 골라 주세요.</li>`;
+ if(!$("#rlPick").hidden)rlPickHTML();}
+const SNIPK=["headline","rhead","chead","word","review","sub"];
+function snipOf(s){const V=cv(s.k,s.c),k=SNIPK.find(k=>(USES[s.k]||[]).includes(k)&&V[k]);return k?plain(String(V[k])).split("\n")[0].slice(0,34):T[s.k].d;}
+/* 장면 추가: 모든 세로 페이지 + 직접 쓰기 */
+const RMAX=10;
+function rlPickHTML(){$("#rlPick").innerHTML=`<div class="rl-pk-h"><b>어떤 페이지를 넣을까요?</b><span>누를 때마다 맨 뒤에 장면이 하나씩 붙어요 · 최대 ${RMAX}개</span></div>
+ <button type="button" class="rl-free" data-k="free"><b>✎ 직접 쓰기</b><small>원하는 페이지가 없으면 빈 페이지에 제목·설명·포인트를 직접 써요</small></button>
+ ${CATS.filter(c=>c[0]!=="all").map(([c,n])=>{const ks=ORDER.filter(k=>T[k].cat===c&&shapeOf(k)==="p"&&k!=="free");return ks.length?`<div class="rl-pk-g"><span>${n}</span><div>${ks.map(k=>`<button type="button" data-k="${k}">${esc(T[k].n)}</button>`).join("")}</div></div>`:"";}).join("")}
+ <div class="go" style="margin-top:4px"><button type="button" class="btn ghost sm" data-pk="close">다 넣었어요</button></div>`;}
+function rlPickToggle(on){const p=$("#rlPick");on=on??p.hidden;p.hidden=!on;$("#rlAdd").setAttribute("aria-expanded",on);if(on){rlPickHTML();p.scrollIntoView({block:"nearest",behavior:"smooth"});}}
+function rlChanged(){rSave();rlPanel();rvBuild();rlMeta();commit();}
+$("#rlPresets").addEventListener("click",e=>{const b=e.target.closest("button[data-p]");if(!b)return;R.scenes=RPRE[+b.dataset.p][1].map(k=>({k,d:3,m:"hl"}));rlChanged();rvPlay(true);});
 $("#rlTr").addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(!b)return;R.tr=b.dataset.v;rlChanged();rvPlay(true);});
 $("#rlUi").addEventListener("change",e=>{R.ui=e.target.checked;rSave();$("#rv")&&$("#rv").classList.toggle("noui",!R.ui);});
-$("#rlAdd").addEventListener("click",()=>{let k=S.tpl;if(shapeOf(k)!=="p")k=S.last.p&&shapeOf(S.last.p)==="p"?S.last.p:"reviewCover";if(R.scenes.length>=8){rlMsg("장면은 8개까지 넣을 수 있어요.");return;}R.scenes.push({k,d:3,m:"rise"});rlChanged();rvSeek(rStarts()[R.scenes.length-1]);});
+$("#rlAdd").addEventListener("click",()=>rlPickToggle());
+$("#rlPick").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.pk==="close"){rlPickToggle(false);return;}const k=b.dataset.k;if(!k||!T[k])return;
+ if(R.scenes.length>=RMAX){rlMsg(`장면은 ${RMAX}개까지 넣을 수 있어요.`,"err");return;}
+ R.scenes.push({k,d:3,m:"hl"});rlChanged();const i=R.scenes.length-1;rvSeek(rStarts()[i]);
+ rlMsg(`${i+1}번 장면으로 ‘${T[k].n}’을 넣었어요. 글을 바꾸려면 그 장면의 ✎ 편집을 눌러 주세요.`,"ok");
+ b.classList.remove("added");void b.offsetWidth;b.classList.add("added");});
 $("#rlList").addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const i=+b.closest("li").dataset.i,a=R.scenes;
  if(b.dataset.act==="go"){rvSeek(rStarts()[i]);rvPlay(false,true);return;}
+ if(b.dataset.act==="edit"){edOpen(i);return;}
+ if(b.dataset.act==="dup"){if(a.length>=RMAX){rlMsg(`장면은 ${RMAX}개까지 넣을 수 있어요.`,"err");return;}a.splice(i+1,0,clone(a[i]));rlChanged();rvSeek(rStarts()[i+1]);return;}
  if(b.dataset.act==="del")a.splice(i,1);else if(b.dataset.act==="up"&&i>0)[a[i-1],a[i]]=[a[i],a[i-1]];else if(b.dataset.act==="down"&&i<a.length-1)[a[i+1],a[i]]=[a[i],a[i+1]];
  rlChanged();});
 $("#rlList").addEventListener("change",e=>{const el=e.target.closest("select");if(!el)return;const i=+el.closest("li").dataset.i;if(el.dataset.act==="d")R.scenes[i].d=+el.value;else R.scenes[i].m=el.value;const t=rStarts()[i];rlChanged();rvSeek(t);rvPlay(false,true);});
@@ -40,16 +58,29 @@ const TOUT={fade:[{opacity:1},{opacity:1}],slide:[{translate:"0 0",filter:"brigh
 function motionTargets(sc){const all=[...sc.querySelectorAll("[data-f]")].filter(e=>!/^photo/.test(e.dataset.f));
  const top=all.filter(e=>!all.some(o=>o!==e&&o.contains(e)));
  return top.map(e=>({e,y:e.getBoundingClientRect().top})).sort((a,b)=>a.y-b.y).map(o=>o.e);}
+/* 하나씩 강조: 카드·리스트 항목이 차례로 핑크로 빛나고, *강조* 글자에는 형광펜이 칠해져요 */
+const CARDF=new Set(["bullets","rows","metrics","keywords","conds","tips","faq","routine","zones","team","changes","quotes","tags"]);
+const HLG="linear-gradient(rgba(236,5,74,.26),rgba(236,5,74,.26))";
+function hlAnims(sc,t0,d,from){const out=[],end=t0+d-120;
+ sc.querySelectorAll("[data-f] em").forEach((em,j)=>out.push(em.animate([{backgroundImage:HLG,backgroundRepeat:"no-repeat",backgroundPosition:"0 88%",backgroundSize:"0% 36%"},{backgroundImage:HLG,backgroundRepeat:"no-repeat",backgroundPosition:"0 88%",backgroundSize:"100% 36%"}],{duration:560,delay:t0+TR*.5+380+j*180,fill:"both",easing:EASE})));
+ const all=[...sc.querySelectorAll("[data-f][data-i]")].filter(e=>CARDF.has(e.dataset.f)),hs=all.filter(e=>!all.some(o=>o!==e&&o.contains(e)))
+  .map(e=>{const r=e.getBoundingClientRect();return {e,y:r.top,x:r.left};}).sort((a,b)=>(a.y-b.y)||(a.x-b.x)).map(o=>o.e);
+ if(!hs.length)return out;const dur=640,stp=Math.max(150,Math.min(440,(end-from-dur)/Math.max(1,hs.length-1)));
+ hs.forEach((e,j)=>{const st=getComputedStyle(e),bg=st.backgroundColor,bs=st.boxShadow==="none"?"0 0 0 0 rgba(236,5,74,0)":st.boxShadow,br=st.borderRadius==="0px"?"16px":st.borderRadius,
+  on={backgroundColor:"rgba(236,5,74,.16)",boxShadow:"0 0 0 4px #EC054A, 0 14px 30px rgba(236,5,74,.28)",scale:"1.035",borderRadius:br};
+  out.push(e.animate([{backgroundColor:bg,boxShadow:bs,scale:"1",borderRadius:st.borderRadius},{...on,offset:.28},{...on,offset:.72},{backgroundColor:bg,boxShadow:bs,scale:"1",borderRadius:st.borderRadius}],{duration:dur,delay:from+j*stp,fill:"none",easing:"ease-in-out"}));});
+ return out;}
 function buildTimeline(root){const anims=[],st=rStarts(),T=rTotal(),scs=[...root.querySelectorAll(".rv-sc")];
  scs.forEach((sc,i)=>{const s=R.scenes[i],t0=st[i],d=s.d*1000;sc.style.display="block";
   anims.push(sc.animate(TIN[R.tr],{duration:i===0&&R.tr==="slide"?1:TR,delay:t0,fill:"both",easing:EASE}));
   if(i<scs.length-1)anims.push(sc.animate(TOUT[R.tr],{duration:TR,delay:t0+d,fill:"both",easing:EASE}));
   sc.querySelectorAll(".bgimg,[data-f^=photo]").forEach(p=>anims.push(p.animate([{scale:"1.12"},{scale:"1"}],{duration:d+TR,delay:t0,fill:"both",easing:"ease-out"})));
   const tg=motionTargets(sc),gap=Math.min(110,(d*.45)/Math.max(1,tg.length));
-  tg.forEach((e,j)=>anims.push(e.animate(MKF[s.m]||MKF.rise,{duration:650,delay:t0+TR*.5+j*gap,fill:"both",easing:EASE})));});
+  tg.forEach((e,j)=>anims.push(e.animate(MKF[s.m]||MKF.rise,{duration:650,delay:t0+TR*.5+j*gap,fill:"both",easing:EASE})));
+  if(s.m==="hl")hlAnims(sc,t0,d,t0+TR*.5+650+tg.length*gap*.5).forEach(a=>anims.push(a));});
  anims.forEach(a=>a.pause());
  return {anims,scs,st,T,set(t){t=Math.max(0,Math.min(T-1,t));anims.forEach(a=>a.currentTime=t);scs.forEach((sc,i)=>{const on=t>=st[i]&&t<st[i]+R.scenes[i].d*1000+TR;sc.style.display=on?"block":"none";sc.style.zIndex=i;});}};}
-function scenesHTML(){return R.scenes.map((s,i)=>`<div class="rv-sc" data-i="${i}">${poster(s.k,"story",true)}</div>`).join("");}
+function scenesHTML(){return R.scenes.map((s,i)=>`<div class="rv-sc" data-i="${i}">${poster(s.k,"story",true,s.c)}</div>`).join("");}
 
 /* 플레이어 (오른쪽 미리보기 자리) */
 let TL=null,rvT=0,rvRaf=0,rvOn=false,rvLast=0;
@@ -57,7 +88,7 @@ const IG={heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5
 const ig=(p,s)=>`<svg viewBox="0 0 24 24" width="${s||64}" height="${s||64}" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 function rvBuild(){const box=$("#reelStage");if(!box||box.hidden)return;cancelAnimationFrame(rvRaf);rvOn=false;
  if(!R.scenes.length){box.innerHTML=`<div class="empty" style="margin:40px auto;max-width:360px">왼쪽에서 빠른 시작을 누르거나 장면을 추가해 주세요.</div>`;TL=null;return;}
- const narrow=isNarrow(),maxH=narrow?Math.max(300,window.innerHeight*.5):Math.max(440,window.innerHeight-250),sh=Math.min(maxH,(box.clientWidth-40)*16/9),sc=sh/RH,sw=RW*sc;
+ const narrow=isNarrow(),maxH=narrow?Math.max(240,window.innerHeight*(document.body.classList.contains("pvbig")?.62:.36)):Math.max(440,window.innerHeight-250),sh=Math.min(maxH,(box.clientWidth-40)*16/9),sc=sh/RH,sw=RW*sc;
  box.innerHTML=`<div class="rv${R.ui?"":" noui"}" id="rv"><div class="rv-phone" style="width:${Math.round(sw)}px;height:${Math.round(sh)}px"><div class="rv-in" style="transform:scale(${sc})">${scenesHTML()}
   <div class="rv-ui"><div class="rv-top"><b>릴스</b>${ig(IG.cam,70)}</div><div class="rv-side">${[[IG.heart,"1,284"],[IG.com,"86"],[IG.send,"공유"],[IG.dots,""]].map(([p,n])=>`<span>${ig(p,74)}<small>${n}</small></span>`).join("")}</div>
   <div class="rv-cap"><div class="rv-pf"><i></i><b>spoany_sinjungdong</b><em>팔로우</em></div><p>스포애니 신중동점 · ${esc(T[R.scenes[0].k].n)} 🔥 더 보기</p><div class="rv-mus">♫ Spoany Studio · 오리지널 오디오</div></div><div class="rv-safe" title="인스타 UI에 가려질 수 있는 영역"></div></div>
@@ -141,7 +172,21 @@ function rlOutShow(blob,fname){const o=$("#rlOut");if(!o)return;rlOutClear();rlO
 $("#rlJson")?.addEventListener("click",async()=>{if(!R.scenes.length){rlMsg("장면을 먼저 넣어 주세요.","err");return;}
  const fps=30,photos={};Object.entries(S.ph).forEach(([slot,id])=>{if(id&&PH[id])photos[slot]={color:PH[id].o,mono:PH[id].m};});
  const data={app:"Spoany Studio",kind:"reels",version:1,fps,width:RW,height:RH,transition:{type:R.tr,durationInFrames:Math.round(TR/1000*fps)},theme:S.theme,mono:S.mono,
-  scenes:R.scenes.map(s=>({template:s.k,name:T[s.k].n,durationInFrames:s.d*fps,motion:s.m,content:JSON.parse(JSON.stringify(cv(s.k)))})),photos};
+  scenes:R.scenes.map(s=>({template:s.k,name:T[s.k].n,durationInFrames:s.d*fps,motion:s.m,content:JSON.parse(JSON.stringify(cv(s.k,s.c)))})),photos};
  try{await PLATFORM.save(new Blob([JSON.stringify(data,null,1)],{type:"application/json"}),`스포애니_릴스_${stamp()}.json`);rlMsg("Remotion용 데이터(.json)를 저장했어요. 영상 파일이 아니라, 나중에 Remotion이 읽어서 고화질 영상을 만드는 설계도예요.","ok");}
  catch(e){rlMsg("파일을 저장하지 못했어요.","err");}});
 rlPanel();
+
+/* ---------- 릴스 장면 편집: 이 장면 글만 바꿔요 ---------- */
+function edOpen(i){if(!R.scenes[i])return;const prev=ED?ED.prev:S.tpl;ED={i,prev};S.tpl=R.scenes[i].k;document.body.classList.add("scedit");
+ buildFields();selectTab("edit");render();scBarUI();$("#fields").scrollTop=0;if(typeof panelTop==="function")panelTop();}
+function edGo(i){if(!R.scenes[i])return;ED.i=i;S.tpl=R.scenes[i].k;buildFields();render();scBarUI();$("#fields").scrollTop=0;}
+function edExit(quiet){if(!ED)return;S.tpl=ED.prev&&T[ED.prev]&&shapeOf(ED.prev)===FORMATS[S.fmt].s?ED.prev:S.tpl;ED=null;document.body.classList.remove("scedit");scBarUI();if(!quiet){buildFields();render();}}
+function scBarUI(){const b=$("#scBar");if(!b)return;if(!ED||!R.scenes[ED.i]){b.hidden=true;b.innerHTML="";return;}const n=R.scenes.length,i=ED.i,own=R.scenes[i].c&&Object.keys(R.scenes[i].c).length;b.hidden=false;
+ b.innerHTML=`<div class="scb-t"><b>릴스 ${i+1} / ${n}번 장면 편집 중</b><small>여기서 고친 글은 <u>이 장면에만</u> 적용돼요. ‘공통’ 표시가 있는 칸(전화번호·QR·코치 정보)만 모든 장면에 같이 바뀌어요.</small></div>
+ <div class="scb-b"><button type="button" class="btn ghost sm" data-sc="prev"${i?"":" disabled"}>← 이전</button>${i<n-1?`<button type="button" class="btn primary sm" data-sc="next">다음 장면 →</button>`:`<button type="button" class="btn primary sm" data-sc="add">＋ 장면 추가</button>`}<button type="button" class="btn ghost sm" data-sc="back">릴스로 돌아가기</button>${own?`<button type="button" class="x" data-sc="reset">이 장면 글 처음으로</button>`:""}</div>`;}
+$("#scBar").addEventListener("click",e=>{const b=e.target.closest("button[data-sc]");if(!b||!ED)return;const a=b.dataset.sc;
+ if(a==="prev")edGo(ED.i-1);else if(a==="next")edGo(ED.i+1);
+ else if(a==="back")selectTab("reels");
+ else if(a==="add"){selectTab("reels");rlPickToggle(true);}
+ else if(a==="reset"){delete R.scenes[ED.i].c;buildFields();render();scBarUI();commit();}});

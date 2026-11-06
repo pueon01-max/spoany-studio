@@ -403,10 +403,15 @@ T.wideReview={n:"가로 후기",cat:"review",m:"pulse",shape:"l",d:"블로그 �
   <div${A("rating")} style="display:flex;align-items:center;gap:16px;margin-top:${Math.round(34*k)}px">${star(Math.round(+c.rating||0),null,Math.round(32*k))}<span style="font:700 ${Math.round(34*k)}px/1 var(--display)">${esc(c.rating)}.0</span></div>
   <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-top:${Math.round(30*k)}px;border-top:1px solid var(--line)"><div${A("name")} style="min-width:0"><div style="font:700 ${Math.round(38*k)}px/1.15 var(--sans);letter-spacing:-.03em">${esc(c.name)}</div><div class="lb"${A("creds")} style="font-size:${Math.round(24*k)}px;margin-top:8px">${esc(lines(c.creds)[0]||"")}</div></div><div${A("ccta")} style="display:flex;align-items:center;gap:14px;height:${Math.round(84*k)}px;padding:0 12px 0 32px;border-radius:999px;background:var(--accent);color:#fff;font:700 ${Math.round(26*k)}px/1 var(--sans);flex:none;box-shadow:0 20px 40px var(--accent-glow)">${esc(c.ccta)}<span style="width:${Math.round(60*k)}px;height:${Math.round(60*k)}px;border-radius:50%;background:#fff;color:var(--accent);display:flex;align-items:center;justify-content:center">${arrowS(Math.round(30*k))}</span></div></div></div>`}};
 
+T.free={n:"직접 쓰기",cat:"campaign",m:"pulse",d:"빈 페이지 · 제목·설명·포인트를 자유롭게",sx:{kicker:"SPOANY NOTE",headline:"원하는 내용을\n*직접* 써 보세요",sub:"제목·설명·포인트 카드를 마음대로 바꿀 수 있어요",bullets:["첫 번째 포인트","두 번째 포인트","세 번째 포인트"]},f(H){const c=C,tall=FH>=1300,story=FH>=1800,bs=c.bullets.slice(0,story?5:tall?4:3),fs=fitLines(c.headline,940,story?120:tall?104:88,56,1);
+ return `<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><span class="cap"${A("kicker")}>${esc(c.kicker)}</span>${pulse(140,50,5)}</div>
+ <h1 class="hl"${A("headline")} style="margin-top:${story?120:tall?70:40}px;font-size:${fs}px">${rich(c.headline)}</h1>${c.sub?`<p class="sub"${A("sub")} style="margin-top:24px">${esc(c.sub)}</p>`:""}
+ <div style="margin-top:${story?80:tall?56:36}px;display:flex;flex-direction:column;gap:${tall?18:14}px">${bs.map((b,i)=>`<div class="card"${A("bullets",i)} style="display:flex;align-items:center;gap:26px;padding:${tall?30:24}px 36px"><span class="num" style="font-size:${tall?44:38}px;color:var(--accent);width:64px;flex:none">${String(i+1).padStart(2,"0")}</span><span style="font:600 ${tall?38:34}px/1.3 var(--sans);letter-spacing:-.02em">${rich(b)}</span></div>`).join("")}</div>
+ <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:20px">${mk()}<span class="lb"${A("footnote")} style="font-size:24px">${esc(c.footnote)}</span></div></div>`}};
 const ORDER=["reviewCover","review","reviewCover2","review2","beforeAfter","wideReview",
  "summary","coupon","price","rings","dday","wideInfo","widePrice","xbanner",
  "notice","schedule","faq","facility","wideNotice",
  "coach","team","routine","tips","mono","muscle",
- "lift","move","fog","rhythm","quote","wideBold","xbannerBold"];
+ "lift","move","fog","rhythm","quote","free","wideBold","xbannerBold"];
 const CATS=[["all","전체"],["review","후기"],["event","이벤트·혜택"],["notice","공지·안내"],["program","프로그램·코치"],["campaign","캠페인"]];
 const shapeOf=k=>T[k].shape||"p";
