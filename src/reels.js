@@ -93,12 +93,18 @@ $("#rlMp4").addEventListener("click",async()=>{if(!R.scenes.length){rlMsg("장�
  const W=720,H=1280,fps=24,pick=await pickCodec(W,H,fps),mime=pick&&window.Mp4Muxer?null:recMime();
  if(!window.htmlToImage||(!(pick&&window.Mp4Muxer)&&!mime)){rlMsg("이 브라우저에서는 영상을 만들 수 없어요. PC 크롬이나 최신 사파리에서 열어 주세요.","err");return;}
  rvOn=false;cancelAnimationFrame(rvRaf);rvUI();
- const btn=$("#rlMp4"),stop=$("#rlStop"),pr=$("#rlProg");btn.disabled=true;stop.hidden=false;pr.hidden=false;rlAbort=false;
+ const btn=$("#rlMp4"),stop=$("#rlStop"),pr=$("#rlProg"),out=$("#rlOut");btn.disabled=true;rlOutClear();stop.hidden=false;pr.hidden=false;rlAbort=false;
  const ex=$("#exp");ex.innerHTML=`<div class="rv-in rv-exp" style="width:${RW}px;height:${RH}px;position:relative;overflow:hidden;background:#000">${scenesHTML()}</div>`;const root=ex.firstElementChild;
  const prog=(p,msg)=>{pr.firstElementChild.style.width=(p*100)+"%";rlMsg(msg);};
  try{await document.fonts.ready;const tl=buildTimeline(root),N=Math.ceil(tl.T/1000*fps);
   const fontEmbedCSS=await htmlToImage.getFontEmbedCSS(root).catch(()=>undefined);
-  const shot=async f=>{if(rlAbort)throw{code:"abort"};tl.set(f*1000/fps);return htmlToImage.toCanvas(root,{width:RW,height:RH,canvasWidth:W,canvasHeight:H,pixelRatio:1,skipAutoScale:true,cacheBust:false,fontEmbedCSS,filter:n=>!(n.classList&&n.classList.contains("rv-sc")&&n.style.display==="none")});};
+  const opt={width:RW,height:RH,cacheBust:false,fontEmbedCSS,filter:n=>!(n.classList&&n.classList.contains("rv-sc")&&n.style.display==="none")};
+  const cv0=document.createElement("canvas");cv0.width=W;cv0.height=H;const cx=cv0.getContext("2d");let lastSig="",drawn=0;
+  // 움직임이 없는 구간(정지 화면)은 다시 그리지 않고 앞 프레임을 그대로 써요 → 빠르고 메모리도 덜 써요
+  const sigOf=()=>tl.anims.map(a=>{const p=a.effect.getComputedTiming().progress;return p==null?"n":p.toFixed(4);}).join()+"|"+tl.scs.map(x=>x.style.display==="none"?0:1).join("");
+  const shot=async f=>{if(rlAbort)throw{code:"abort"};tl.set(f*1000/fps);const sig=sigOf();if(sig===lastSig)return cv0;
+   const c=await htmlToImage.toCanvas(root,{...opt,canvasWidth:W,canvasHeight:H,pixelRatio:1,skipAutoScale:true});cx.drawImage(c,0,0,W,H);c.width=c.height=0;
+   lastSig=sig;drawn++;return cv0;};
   const t0=performance.now(),eta=d=>{const el=(performance.now()-t0)/1000;return Math.max(0,Math.round(el/Math.max(d,.01)-el));};
   let blob,ext="mp4";
   if(pick&&window.Mp4Muxer){
@@ -119,14 +125,20 @@ $("#rlMp4").addEventListener("click",async()=>{if(!R.scenes.length){rlMsg("장�
    await new Promise(r=>setTimeout(r,1000/fps+60));rec.stop();await stopped;c.remove();
    ext=mime.includes("mp4")?"mp4":"webm";blob=new Blob(chunks,{type:mime.split(";")[0]});}
   if(!blob||!blob.size)throw new Error("empty");
-  await PLATFORM.save(blob,`스포애니_릴스_${stamp()}.${ext}`);
-  rlMsg(`${ext.toUpperCase()} 영상을 저장했어요 · ${(blob.size/1048576).toFixed(1)}MB · 720p ${fps}fps · ${(tl.T/1000).toFixed(0)}초${ext==="webm"?" (이 브라우저는 MP4 대신 WebM으로 만들어요. 인스타에 올릴 땐 PC 크롬에서 MP4로 저장하는 걸 추천해요)":""}`,"ok");}
+  const fname=`spoany_reels_${stamp()}.${ext}`;rlOutShow(blob,fname);
+  await PLATFORM.save(blob,fname);
+  console.info("reels frames drawn",drawn,"/",N);rlMsg(`영상을 저장했어요 · 파일 이름 ${fname} · ${(blob.size/1048576).toFixed(1)}MB · 720p ${fps}fps · ${(tl.T/1000).toFixed(0)}초${ext==="webm"?" (이 브라우저는 MP4 대신 WebM으로 만들어요. 인스타에 올릴 땐 PC 크롬에서 MP4로 저장하는 걸 추천해요)":""}`,"ok");}
  catch(e){const c=e&&e.code;rlMsg(c==="abort"?"영상 저장을 멈췄어요.":c==="declined"?"저장을 취소했어요.":c==="unavailable"||c==="not_granted"?"이 화면에서는 파일을 저장할 수 없어요.":"영상을 만들지 못했어요. 장면 수를 줄이거나 PC 크롬에서 다시 시도해 주세요.","err");console.error(e);}
  finally{ex.innerHTML="";btn.disabled=false;stop.hidden=true;pr.hidden=true;}});
 $("#rlStop").addEventListener("click",()=>{rlAbort=true;});
+// 만든 영상을 패널 안에서 바로 확인 (저장 창이 안 떠도 길게 누르기·우클릭으로 저장 가능)
+let rlOutURL=null;
+function rlOutClear(){const o=$("#rlOut");if(rlOutURL){URL.revokeObjectURL(rlOutURL);rlOutURL=null;}if(o){o.hidden=true;o.innerHTML="";}}
+function rlOutShow(blob,fname){const o=$("#rlOut");if(!o)return;rlOutClear();rlOutURL=URL.createObjectURL(blob);
+ o.innerHTML=`<video src="${rlOutURL}" controls playsinline muted loop></video><p class="note">방금 만든 영상 · <b>${esc(fname)}</b> · ${(blob.size/1048576).toFixed(1)}MB<br>저장 창이 안 떴거나 다른 파일이 받아졌다면, 이 영상을 길게 눌러(PC는 우클릭) ‘동영상 저장’을 해도 돼요.</p>`;o.hidden=false;}
 
 /* Remotion용 데이터: 같은 장면·모션·내용을 그대로 담아요 (사진 포함) */
-$("#rlJson").addEventListener("click",async()=>{if(!R.scenes.length){rlMsg("장면을 먼저 넣어 주세요.","err");return;}
+$("#rlJson")?.addEventListener("click",async()=>{if(!R.scenes.length){rlMsg("장면을 먼저 넣어 주세요.","err");return;}
  const fps=30,photos={};Object.entries(S.ph).forEach(([slot,id])=>{if(id&&PH[id])photos[slot]={color:PH[id].o,mono:PH[id].m};});
  const data={app:"Spoany Studio",kind:"reels",version:1,fps,width:RW,height:RH,transition:{type:R.tr,durationInFrames:Math.round(TR/1000*fps)},theme:S.theme,mono:S.mono,
   scenes:R.scenes.map(s=>({template:s.k,name:T[s.k].n,durationInFrames:s.d*fps,motion:s.m,content:JSON.parse(JSON.stringify(cv(s.k)))})),photos};
