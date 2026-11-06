@@ -13,7 +13,7 @@ assets = ("const ASSET={" + ",".join(f'{k}:"{b64(p,m)}"' for k, p, m in [
 
 def app(platform):
     a = rd("app.js")
-    for mark, val in [("//@@ASSETS", assets), ("//@@TEMPLATES", rd("templates.js")), ("//@@PLATFORM", rd(f"platform.{platform}.js"))]:
+    for mark, val in [("//@@ASSETS", assets), ("//@@TEMPLATES", rd("templates.js")), ("//@@PLATFORM", rd(f"platform.{platform}.js")), ("//@@REELS", rd("reels.js"))]:
         assert mark in a, mark
         a = a.replace(mark, val)
     return a
@@ -30,7 +30,7 @@ AI_SETTINGS = '''<details class="card2" id="apiBox"><summary>Claude API 설정</
 
 def page(platform):
     sh = rd("shell.html")
-    style = rd("ui.css") + "\n" + rd("poster.css")
+    style = rd("ui.css") + "\n" + rd("reels.css") + "\n" + rd("poster.css")
     if platform == "web":
         head = '''<!doctype html>
 <html lang="ko">
@@ -49,7 +49,7 @@ def page(platform):
         style = fontface('url("fonts/PretendardVariable.woff2")', 'url("fonts/InterTight-Variable.woff2")') + \
             "html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}\n" + style
         body_open = "</head>\n<body>"
-        scripts = '<script src="vendor/html-to-image.js"></script>\n<script src="vendor/qrcode.js"></script>\n<script src="vendor/html2canvas.min.js"></script>'
+        scripts = '<script src="vendor/html-to-image.js"></script>\n<script src="vendor/qrcode.js"></script>\n<script src="vendor/html2canvas.min.js"></script>\n<script src="vendor/mp4-muxer.js"></script>'
         tail = '''<script>
 if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 </script>
@@ -62,12 +62,12 @@ if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWo
         style = fontface('url("' + b64("fonts/PretendardVariable.woff2", "font/woff2") + '")',
                          'url("' + b64("fonts/InterTight-Variable.woff2", "font/woff2") + '")') + style
         body_open = ""
-        scripts = "<script>\n" + rd("vendor/html-to-image.js") + "\n</script>\n<script>\n" + rd("vendor/qrcode.js") + "\n</script>"
+        scripts = "<script>\n" + rd("vendor/html-to-image.js") + "\n</script>\n<script>\n" + rd("vendor/qrcode.js") + "\n</script>\n<script>\n" + rd("vendor/mp4-muxer.js") + "\n</script>"
         tail = ""
         ai = ""
     out = sh
     for k, v in [("{{HEAD}}", head), ("{{STYLE}}", style), ("{{BODY_OPEN}}", body_open), ("{{AI_SETTINGS}}", ai),
-                 ("{{SCRIPTS}}", scripts), ("{{APP}}", app(platform)), ("{{TAIL}}", tail)]:
+                 ("{{SCRIPTS}}", scripts), ("{{APP}}", app(platform)), ("{{TAIL}}", tail), ("{{REELS_PANEL}}", rd("reels.html"))]:
         assert k in out, k
         out = out.replace(k, v)
     return out

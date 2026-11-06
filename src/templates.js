@@ -29,10 +29,63 @@ function spark(w,h){gid++;const pts=[[0,.62],[.14,.5],[.28,.7],[.42,.58],[.56,.6
 function pulse(w,h,sw){const m=h/2;return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:inline-block;vertical-align:middle;overflow:visible"><path d="M0 ${m} H${w*.3} L${w*.38} ${h*.12} L${w*.47} ${h*.94} L${w*.55} ${m*.4} L${w*.6} ${m} H${w}" fill="none" stroke="#EC054A" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
 function handle(w){gid++;const i=gid;
  return `<svg width="${w}" height="${Math.round(w*.82)}" viewBox="0 0 400 330" style="display:block;overflow:visible"><defs><linearGradient id="hm${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset=".35" stop-color="#8d8d92"/><stop offset=".55" stop-color="#2a2a2d"/><stop offset=".8" stop-color="#6a6a70"/><stop offset="1" stop-color="#1a1a1c"/></linearGradient><linearGradient id="hf${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2f2f2"/><stop offset=".5" stop-color="#5c5c62"/><stop offset="1" stop-color="#c9c9cd"/></linearGradient><pattern id="kn${i}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V5" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/></pattern></defs><path d="M200 0 V58" stroke="url(#hf${i})" stroke-width="7" stroke-linecap="round"/><rect x="186" y="40" width="28" height="44" rx="12" fill="none" stroke="url(#hf${i})" stroke-width="7"/><path d="M200 84 L102 248 M200 84 L298 248" stroke="url(#hf${i})" stroke-width="12" stroke-linecap="round" fill="none"/><g transform="rotate(-28 102 248)"><rect x="12" y="223" width="180" height="50" rx="25" fill="url(#hm${i})"/><rect x="40" y="223" width="124" height="50" fill="url(#kn${i})"/><ellipse cx="14" cy="248" rx="9" ry="25" fill="#c9c9cd"/></g><g transform="rotate(28 298 248)"><rect x="208" y="223" width="180" height="50" rx="25" fill="url(#hm${i})"/><rect x="236" y="223" width="124" height="50" fill="url(#kn${i})"/><ellipse cx="386" cy="248" rx="9" ry="25" fill="#3a3a3e"/></g></svg>`;}
-const MUS={"어깨":"sh","삼각근":"sh","삼두":"ar","이두":"ar","팔":"ar","가슴":"ch","하체":"leg","다리":"leg","허벅지":"leg","종아리":"leg","복근":"ab","코어":"ab","목":"nk","등":"ch"};
-function body(w,chips){const on=new Set((chips||[]).filter(c=>c.on).map(c=>MUS[c.label]||""));
- const seg=[[100,64,100,80,16,"nk"],[64,94,60,98,30,"sh"],[136,94,140,98,30,"sh"],[86,104,86,112,30,"ch"],[114,104,114,112,30,"ch"],[92,136,92,176,16,"ab"],[108,136,108,176,16,"ab"],[52,120,46,162,18,"ar"],[148,120,154,162,18,"ar"],[44,180,36,232,15,"ar"],[156,180,164,232,15,"ar"],[88,214,84,290,30,"leg"],[112,214,116,290,30,"leg"],[84,312,86,372,22,"leg"],[116,312,114,372,22,"leg"]];
- return `<svg class="body" width="${w}" height="${w*2}" viewBox="0 0 200 400" style="display:block"><path class="s" d="M100 60 C70 64 52 80 48 100 L34 240 L44 244 L62 140 L72 184 L72 214 L76 386 L96 386 L100 230 L104 386 L124 386 L128 214 L128 184 L138 140 L156 244 L166 240 L152 100 C148 80 130 64 100 60Z" opacity=".55"/><ellipse class="s" cx="100" cy="36" rx="20" ry="25"/>${seg.map(([a,b,c,d,s,g])=>`<line class="m${on.has(g)?" on":""}" x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke-width="${s}"/>`).join("")}</svg>`;}
+/* ---------- 인체 근육 맵 (앞면·뒷면 공용) ---------- */
+// 라벨 → 근육 그룹
+const MUS={"어깨":["sh"],"삼각근":["sh"],"가슴":["ch"],"등":["lat","trap","lb"],"광배":["lat"],"승모":["trap"],"허리":["lb"],
+ "삼두":["tri"],"이두":["bi"],"팔":["bi","tri","fa"],"전완":["fa"],"복근":["ab","ob"],"코어":["ab","ob","lb"],
+ "하체":["quad","ham","glute","calf"],"다리":["quad","ham","calf"],"허벅지":["quad","ham"],"엉덩이":["glute"],"둔근":["glute"],"종아리":["calf"],"전신":["sh","ch","lat","trap","bi","tri","ab","ob","quad","ham","glute","calf"]};
+const FRONT_G=["sh","ch","bi","fa","ab","ob","quad","calf"],BACK_G=["trap","lat","lb","tri","glute","ham","calf","sh","fa"];
+// 왼쪽 절반(보는 사람 기준)만 그리고 좌우 대칭으로 복제. viewBox 0 0 200 400
+const BASE_L=[ // 왼쪽 절반 실루엣: 몸통·팔·손·다리
+ "M100 62 C90 66 77 70 68 72 C60 77 62 94 65 120 C66 150 68 176 70 198 C66 205 65 211 65 216 L100 216 Z",
+ "M67 73 C53 73 45 83 45 96 L44 134 C40 160 34 186 32 210 L41 213 C47 196 55 172 57 152 C61 134 65 116 67 98 Z",
+ "M32 209 C27 216 26 228 30 236 C33 240 37 238 38 232 C39 224 41 217 41 212 Z",
+ "M65 212 L100 218 L100 236 C99 260 96 284 94 304 C96 330 95 356 92 382 L93 390 C92 394 86 395 78 394 C76 390 79 386 81 381 C76 356 74 332 76 306 C68 280 63 248 65 212 Z"].join(" ");
+const HEAD=`<ellipse cx="100" cy="33" rx="16.5" ry="21"/><path d="M92 50 L108 50 L109 66 L91 66 Z"/>`;
+const GL=(d,g)=>[d,g];
+const FRONT_L=[
+ GL("M92 58 C88 63 80 67 68 71 L80 75 C88 72 93 67 95 61 Z","trap"),
+ GL("M67 73 C55 73 47 81 46 95 C46 103 48 109 51 113 C55 103 61 95 70 89 C72 83 71 77 67 73 Z","sh"),
+ GL("M72 80 C80 77 90 77 98 79 L98 112 C90 118 78 118 71 112 C65 106 65 96 68 89 Z","ch"),
+ GL("M51 116 C53 106 59 98 65 97 C65 113 61 132 55 146 C49 146 45 140 45 132 C45 124 48 120 51 116 Z","bi"),
+ GL("M45 151 C49 150 54 150 57 152 C55 172 47 196 41 212 L33 210 C33 190 37 168 45 151 Z","fa"),
+ GL("M86 121 h11.5 v14 h-11.5 Z","ab"),GL("M86 138 h11.5 v15 h-11.5 Z","ab"),GL("M86 156 h11.5 v15 h-11.5 Z","ab"),GL("M87 174 h10.5 v20 c-4 4 -8 2 -10.5 -2 Z","ab"),
+ GL("M71 120 C77 125 82 129 83.5 137 L83.5 190 C78 193 73 195 70 197 C68 176 66 150 66 133 C66 125 68 121 71 120 Z","ob"),
+ GL("M67 215 C75 211 87 211 97 221 C97 250 95 276 91 298 C85 302 80 302 77 298 C71 280 65 250 67 215 Z","quad"),
+ GL("M77 312 C83 307 90 309 94 315 C94 340 92 362 90 380 L83 380 C79 360 75 336 77 312 Z","calf"),
+];
+const BACK_L=[
+ GL("M100 55 C94 62 85 67 69 72 C80 84 91 102 100 130 Z","trap"),
+ GL("M67 73 C55 73 47 81 46 95 C46 103 48 109 51 113 C55 103 61 95 70 89 C72 83 71 77 67 73 Z","sh"),
+ GL("M51 115 C47 123 45 133 47 146 C53 146 58 140 60 128 C62 116 63 106 65 98 C59 100 54 106 51 115 Z","tri"),
+ GL("M45 151 C49 150 54 150 57 152 C55 172 47 196 41 212 L33 210 C33 190 37 168 45 151 Z","fa"),
+ GL("M70 92 C78 99 87 112 97 132 L97 148 C90 168 83 182 76 189 C72 175 68 150 67 122 C67 110 68 100 70 92 Z","lat"),
+ GL("M88 157 C92 154 96.5 155 98.5 159 L98.5 198 C94 200.5 89 200.5 86 198.5 C85.5 184 86 169 88 157 Z","lb"),
+ GL("M67 206 C77 199 92 199 99 206 L99 240 C90 248 77 248 69 240 C65 230 65 216 67 206 Z","glute"),
+ GL("M69 249 C79 253 90 253 98 249 C98 272 94 292 90 302 C84 305 78 305 74 300 C70 284 67 266 69 249 Z","ham"),
+ GL("M77 312 C85 306 94 312 94 326 C94 344 90 356 86 362 C80 360 76 348 74 334 C73 324 74 316 77 312 Z","calf"),
+];
+const DET_F=["M58 81 C56 91 54 100 52 108","M84 223 C84 250 86 273 88 292","M73 238 C75 259 78 280 82 296","M85.5 318 C86.5 340 86.5 360 86 376","M76 101 C84 108 92 109 98 106"],
+ DET_B=["M77 118 C83 138 86 158 86 176","M84 256 C84 274 84 290 84 300","M85 316 C85 330 85 344 86 356","M70 233 C80 241 92 241 99 237","M58 81 C56 91 54 100 52 108"];
+let bodyId=0;
+function bodyFig(view,on,x){const L=view==="back"?BACK_L:FRONT_L,id=bodyId;
+ const half=L.map(([d,g])=>`<path d="${d}" fill="url(#${on.has(g)?"bmOn":"bmOff"}${id})"${on.has(g)?` filter="url(#bmGl${id})"`:""}/>`).join("");
+ return `<g transform="translate(${x} 0)"><g fill="url(#bmBase${id})">${HEAD}<path d="${BASE_L}"/><path d="${BASE_L}" transform="matrix(-1 0 0 1 200 0)"/></g>
+ <g stroke="#1e1e23" stroke-width="1.6" stroke-linejoin="round">${half}<g transform="matrix(-1 0 0 1 200 0)">${half}</g></g>
+ <g fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.2" stroke-linecap="round">${(view==="back"?DET_B:DET_F).map(d=>`<path d="${d}"/><path d="${d}" transform="matrix(-1 0 0 1 200 0)"/>`).join("")}</g>
+ ${view==="back"?`<path d="M100 58 V200" stroke="#1e1e23" stroke-width="1.6"/>`:`<path d="M100 79 V112" stroke="#1e1e23" stroke-width="1.6"/>`}
+ <text x="100" y="408" text-anchor="middle" font-family="Inter Tight, Pretendard, sans-serif" font-size="13" font-weight="700" letter-spacing="2" fill="rgba(255,255,255,.42)">${view==="back"?"BACK":"FRONT"}</text></g>`;}
+function bodyOn(chips){const on=new Set();(chips||[]).filter(c=>c.on).forEach(c=>(MUS[String(c.label).trim()]||[]).forEach(g=>on.add(g)));return on;}
+function bodyView(chips){const on=bodyOn(chips),f=["ch","bi","ab","ob","quad"].some(g=>on.has(g)),b=["trap","lat","lb","tri","glute","ham"].some(g=>on.has(g));return b&&!f?"back":"front";}
+// view: "both" | "front" | "back" | "auto"(선택한 근육이 있는 면)
+function body(w,chips,view){bodyId++;const id=bodyId,on=bodyOn(chips);
+ if(!view||view==="auto")view=bodyView(chips);
+ const both=view==="both",vw=both?400:200,h=Math.round(w*(both?420/400:420/200));
+ const defs=`<defs><linearGradient id="bmBase${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34343b"/><stop offset="1" stop-color="#26262c"/></linearGradient>
+ <linearGradient id="bmOff${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a5a63"/><stop offset=".55" stop-color="#46464e"/><stop offset="1" stop-color="#3a3a41"/></linearGradient>
+ <linearGradient id="bmOn${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7A9C"/><stop offset=".45" stop-color="#EC054A"/><stop offset="1" stop-color="#B0003A"/></linearGradient>
+ <filter id="bmGl${id}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.2"/><feFlood flood-color="#EC054A" flood-opacity=".55"/><feComposite operator="in" in2="SourceAlpha" result="g0"/><feGaussianBlur in="g0" stdDeviation="3"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+ return `<svg class="body" width="${w}" height="${h}" viewBox="0 0 ${vw} 420" style="display:block;overflow:visible">${defs}${both?bodyFig("front",on,0)+bodyFig("back",on,200):bodyFig(view,on,0)}</svg>`;}
 const SV=(p,w)=>`<svg width="${w||30}" height="${w||30}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const I={fire:SV('<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .3 2 1.5 3 2.5 3 0-3-1-5 0-8z"/>'),
  run:SV('<circle cx="15" cy="4" r="2"/><path d="M6 21l3-6 3 2v5M9 15l1-5 4 2 3-1M10 10l-3 1-2 3"/>'),
@@ -139,7 +192,7 @@ T.beforeAfter={n:"비포·애프터",cat:"review",m:"pulse",d:"회원 변화 기
 T.summary={n:"요약",cat:"event",m:"pulse",d:"혜택 숫자 요약",pair:{l:"wideInfo",x:"xbanner"},f(H){const c=C,ms=c.metrics.slice(1,FH>1600?5:3);const big=FH>=1300;
  return `<div class="orb" style="position:absolute;right:-110px;top:60px;width:540px;height:540px"></div><div class="orb gl" style="position:absolute;right:340px;top:90px;width:150px;height:150px"></div>
  <div class="pad" style="justify-content:space-between"><div><div class="cap"${A("kicker")}>${esc(c.kicker)}</div><h1 class="hl"${A("headline")} style="margin-top:22px;font-size:${big?100:84}px">${withPulse(rich(c.headline),120,56,6)}</h1>${c.sub&&big?`<p class="sub"${A("sub")} style="margin-top:22px">${esc(c.sub)}</p>`:""}</div>
- <div style="display:flex;flex-direction:column;gap:20px"><div class="card red"${A("metrics",0)} style="width:430px;align-self:flex-end;transform:rotate(-7deg) translate(-20px,-10px)"><span class="ico">${I.clock}</span><div style="margin-top:${big?54:24}px;white-space:nowrap"><span class="num">${esc(M(0).value)}</span><span class="unit">${esc(M(0).unit)}</span></div><div class="lb" style="margin-top:10px">${esc(M(0).label)}${M(0).status?" · "+esc(M(0).status):""}</div></div>
+ <div style="display:flex;flex-direction:column;gap:20px"><div class="card red"${A("metrics",0)} style="min-width:430px;max-width:600px;align-self:flex-end;transform:rotate(-7deg) translate(-20px,-10px)"><span class="ico">${I.clock}</span><div style="margin-top:${big?54:24}px;white-space:nowrap"><span class="num">${esc(M(0).value)}</span><span class="unit">${esc(M(0).unit)}</span></div><div class="lb" style="margin-top:10px">${esc(M(0).label)}${M(0).status?" · "+esc(M(0).status):""}</div></div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">${ms.map((m,i)=>stat(m,i+1)).join("")}</div>${mk()}</div></div>`}};
 
 T.rings={n:"링 카드",cat:"event",m:"pulse",d:"출석·챌린지 진행률",pair:{l:"wideInfo"},f(H){const c=C,k=Math.min(1,H/1350),D=Math.round(330*k),r=c.ring,ph=PA("bg");
@@ -220,7 +273,7 @@ T.routine={n:"오늘의 루틴",cat:"program",m:"pulse",d:"운동 순서·세트
  return `<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center">${mk()}<span class="cap"${A("date")}>${esc(c.date)}</span></div>
  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:30px;margin-top:${t?46:24}px">
   <div style="min-width:0;padding-top:${t?20:6}px"><div class="cap"${A("kicker")} style="color:var(--accent-strong)">${esc(c.kicker)}</div><h1 class="hl"${A("headline")} style="margin-top:14px;font-size:${t?92:74}px">${rich(c.headline)}</h1></div>
-  <div class="bodycard"${A("chips")} style="padding:${t?30:20}px ${t?40:30}px">${body(bw,c.chips)}</div></div>
+  <div class="bodycard"${A("chips")} style="padding:${t?30:22}px ${t?30:24}px ${t?22:16}px">${body(Math.round(bw*1.85),c.chips,"both")}</div></div>
  <div style="margin-top:auto;display:flex;flex-direction:column;gap:${t?14:10}px">${rs.map((r,i)=>`<div class="card sm"${A("routine",i)} style="display:flex;align-items:center;gap:24px;padding:${t?26:18}px 30px"><span class="idx">${pad2(i+1)}</span><div style="flex:1;min-width:0"><div style="font:600 ${t?36:31}px/1.15 var(--sans);letter-spacing:-.03em">${esc(r.label)}</div>${r.note?`<div class="lb" style="font-size:22px;margin-top:6px">${esc(r.note)}</div>`:""}</div><div class="num" style="font-size:${t?42:36}px;white-space:nowrap">${esc(r.value)}</div></div>`).join("")}</div></div>`}};
 
 T.tips={n:"꿀팁 카드",cat:"program",m:"pulse",d:"정보형 카드뉴스",sx:{kicker:"HEALTH TIP",headline:"헬스 초보가\n꼭 알아야 할 *3가지*",page:"1",total:"3"},f(H){const c=C,t=FH>=1300,ts=c.tips.slice(0,FH>=1800?4:3);
@@ -238,11 +291,11 @@ T.mono={n:"모노",cat:"program",m:"pulse",d:"컨디션 + 프로그램",pair:{l:
  <div style="position:absolute;left:64px;right:64px;bottom:64px;display:flex;flex-direction:column;gap:28px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 40px/1 var(--sans);color:#fff;letter-spacing:-.02em">Program</span>${mk(true,38)}</div>
  <div${A("tags")} style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">${progs.map((p,i)=>`<div class="glow${i?" dim":""}" style="height:${FH>1300?260:200}px"><div style="font:600 30px/1.2 var(--sans)">${esc(p)}</div><div style="font:500 22px/1.2 var(--sans);opacity:.75;margin-top:10px">${i?"0":"1"} / 5</div></div>`).join("")}</div></div>`}};
 
-T.muscle={n:"근육 선택",cat:"program",m:"bold",d:"부위별 PT · 앱 화면",pair:{l:"wideBold",x:"xbannerBold"},sx:{kicker:"PT PROGRAM",headline:"오늘은 *어디*를\n깨울까요"},f(H){const c=C,top=Math.round(H*.26);
+T.muscle={n:"근육 선택",cat:"program",m:"bold",d:"부위별 PT · 앱 화면",pair:{l:"wideBold",x:"xbannerBold"},sx:{kicker:"PT PROGRAM",headline:"오늘은 *어디*를\n깨울까요"},f(H){const c=C,top=Math.round(H*.26),bv=bodyView(c.chips);
  return `<div style="position:absolute;inset:0;background:var(--carbon)"></div><div style="position:absolute;left:520px;top:${top+260}px;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(255,111,149,.55),rgba(236,5,74,.35) 35%,transparent 70%)"></div>
  <div style="position:absolute;left:64px;top:72px"><div class="cap"${A("kicker")} style="color:rgba(255,255,255,.6)">${esc(c.kicker)}</div><h1 class="hl"${A("headline")} style="margin-top:18px;color:#fff;font-size:84px">${rich(c.headline)}</h1></div>
- <div class="phone"${A("chips")} style="left:470px;top:${top}px;transform:rotate(-24deg)"><div style="position:absolute;left:60px;top:120px;font:800 54px/1.1 var(--display);color:#fff;letter-spacing:-.03em">Target Muscle</div><div style="position:absolute;left:52px;top:200px;display:flex;gap:8px"><span style="padding:16px 30px;border-radius:18px;background:#6b6b72;color:#fff;font:600 28px/1 var(--sans)">앞면</span><span style="padding:16px 30px;color:rgba(255,255,255,.6);font:600 28px/1 var(--sans)">뒷면</span></div>
- <div style="position:absolute;left:30px;top:320px;display:flex;flex-direction:column;gap:22px;transform:scale(.8);transform-origin:0 0">${c.chips.slice(0,6).map(ch=>`<span class="chk${ch.on?" on":""}"><i>${I.chk}</i>${esc(ch.label)}</span>`).join("")}</div><div style="position:absolute;right:10px;top:400px">${body(230,c.chips)}</div><div class="btn" style="position:absolute;left:40px;bottom:60px;height:110px;width:400px;font-size:36px">선택 완료</div></div>
+ <div class="phone"${A("chips")} style="left:470px;top:${top}px;transform:rotate(-24deg)"><div style="position:absolute;left:60px;top:120px;font:800 54px/1.1 var(--display);color:#fff;letter-spacing:-.03em">Target Muscle</div><div style="position:absolute;left:52px;top:200px;display:flex;gap:8px">${["앞면","뒷면"].map((n,i)=>`<span style="padding:16px 30px;border-radius:18px;${(i===1)===(bv==="back")?"background:#6b6b72;color:#fff":"color:rgba(255,255,255,.6)"};font:600 28px/1 var(--sans)">${n}</span>`).join("")}</div>
+ <div style="position:absolute;left:30px;top:320px;display:flex;flex-direction:column;gap:22px;transform:scale(.8);transform-origin:0 0">${c.chips.slice(0,6).map(ch=>`<span class="chk${ch.on?" on":""}"><i>${I.chk}</i>${esc(ch.label)}</span>`).join("")}</div><div style="position:absolute;right:14px;top:380px">${body(230,c.chips,bv)}</div><div class="btn" style="position:absolute;left:40px;bottom:60px;height:110px;width:400px;font-size:36px">선택 완료</div></div>
  <div style="position:absolute;left:64px;bottom:64px">${mk(true)}</div>`}};
 
 /* ---------- 캠페인·무드 ---------- */

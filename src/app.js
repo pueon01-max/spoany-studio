@@ -156,14 +156,15 @@ const MONO_AUTO=["rings","facility","team","coach","move","rhythm","xbanner","wi
 const ALLKEYS=Object.keys(F);
 
 /* ---------- poster ---------- */
-/* SNS 포맷은 휴대폰에서 보기 좋게 레이아웃 전체를 살짝 키워요 (작은 캔버스에 배치한 뒤 확대) */
-const ZOOM={feed:1.14,square:1.08,story:1.14};
-/* 확대는 정보형 카드 템플릿에만 (1=그대로 확대, .5=절반). 사진·누끼·큰 타이포 포스터는 원래 배열 그대로 */
-const ZT={summary:1,coupon:.5,price:1,dday:1,notice:1,schedule:1,faq:1,facility:1,tips:1,routine:1},ZT_SQ={};
-function poster(key,fk,exporting){const t=T[key],f=FORMATS[fk];C=cv(key);const dark=(t.m==="bold")||S.theme==="dark",z=1+((ZOOM[fk]||1)-1)*((fk==="square"?ZT_SQ[key]:undefined)??ZT[key]??0);
- const lw=Math.round(f.w/z),lh=Math.round(f.h/z);FH=f.h;const inner=t.f(lh,lw);
- const body=z===1?inner:`<div class="pz" style="position:absolute;left:0;top:0;width:${lw}px;height:${lh}px;transform:scale(${f.w/lw},${f.h/lh});transform-origin:0 0">${inner}</div>`;
- return `<div class="pc${dark?" dark":""}${exporting?" exporting":""}" style="width:${f.w}px;height:${f.h}px">${body}<div class="grain"></div></div>`;}
+/* 인스타용 글자 키우기: 배열·간격·카드 크기는 원래 그대로 두고 글자만 크기별로 키워요.
+   작은 글씨(설명·라벨)는 많이, 큰 헤드라인은 조금만. 사진·누끼·포스터형 템플릿은 원래 그대로. */
+const TS={summary:1,coupon:1,price:1,dday:1,notice:1,schedule:1,faq:1,facility:1,tips:1,routine:1},TSF={feed:1,story:1,square:.6};
+const tsMul=n=>n<=24?.22:n<=40?.16:n<=64?.12:n<=120?.07:0;
+function scaleText(h,a){const f=n=>{n=+n;return Math.round(n*(1+a*tsMul(n))*10)/10;};
+ return h.replace(/font-size:\s*(\d+(?:\.\d+)?)px/g,(_,n)=>`font-size:${f(n)}px`).replace(/(font:\s*(?:\d{3}|normal|bold|italic)\s+)(\d+(?:\.\d+)?)px/g,(_,p,n)=>`${p}${f(n)}px`);}
+function poster(key,fk,exporting){const t=T[key],f=FORMATS[fk];C=cv(key);const dark=(t.m==="bold")||S.theme==="dark";FH=f.h;
+ const a=(TS[key]||0)*(TSF[fk]||0);let inner=t.f(f.h,f.w);if(a)inner=scaleText(inner,a);
+ return `<div class="pc${dark?" dark":""}${exporting?" exporting":""}" style="width:${f.w}px;height:${f.h}px${a?`;--tz:${a}`:""}">${inner}<div class="grain"></div></div>`;}
 
 /* ---------- format & theme UI ---------- */
 function fmtIcon(f){const r=f.w/f.h,h=r<1?15:11,w=Math.max(5,Math.min(24,Math.round(h*r)));return `<i style="width:${w}px;height:${h}px"></i>`;}
@@ -193,7 +194,7 @@ function syncControls(){
 let rt,gt;
 function render(){
  const f=FORMATS[S.fmt],fit=$("#fit");
- const narrow=window.innerWidth<900,avail=Math.max(240,fit.clientWidth||600),maxH=narrow?Math.max(320,window.innerHeight*.52):Math.max(420,window.innerHeight-300);
+ const narrow=window.innerWidth<900,avail=Math.max(240,fit.clientWidth||600),maxH=narrow?Math.max(200,window.innerHeight*(document.body.classList.contains("pvbig")?.66:.34)):Math.max(420,window.innerHeight-300);
  const sc=Math.min(avail/f.w,maxH/f.h,1);
  fit.innerHTML=`<div class="box" style="width:${Math.round(f.w*sc)}px;height:${Math.round(f.h*sc)}px">${poster(S.tpl,S.fmt)}</div>`;
  fit.querySelector(".pc").style.transform=`scale(${sc})`;
@@ -201,28 +202,55 @@ function render(){
  $("#tplMeta").textContent=`${T[S.tpl].d} · ${f.n}`;
  syncControls();shownNotes();}
 function scheduleRender(){clearTimeout(rt);rt=setTimeout(render,90);}
-function scheduleGallery(d){clearTimeout(gt);gt=setTimeout(renderGallery,d??500);}
-function afterChange(o){o=o||{};if(o.fields||S.tpl!==edTpl)buildFields();render();if(o.gallery)renderGallery();else scheduleGallery();commit();}
-let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{render();renderGallery();},150);});
+function scheduleGallery(d){clearTimeout(gt);gt=setTimeout(refreshThumbs,d??500);}
+function afterChange(o){o=o||{};if(o.fields||S.tpl!==edTpl)buildFields();render();if(o.gallery)renderGallery();else if(!o.noGallery)scheduleGallery();commit();}
+let rz,lastW=window.innerWidth;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{render();if(window.innerWidth!==lastW){lastW=window.innerWidth;renderGallery();}},150);});
 
-/* ---------- gallery ---------- */
+/* ---------- gallery ----------
+   검색 · 최근 사용 · 분류별 묶음. 썸네일은 화면에 보이는 것만 그려요(빠르게). */
+let RECENT=[];try{RECENT=JSON.parse(localStorage.getItem("spoany.recent")||"[]")}catch(e){}
+function addRecent(k){RECENT=[k,...RECENT.filter(x=>x!==k)].slice(0,8);try{localStorage.setItem("spoany.recent",JSON.stringify(RECENT))}catch(e){}}
+const ALIAS={reviewCover:"후기 리뷰 커버 첫장 표지 코치",review:"후기 리뷰 본문 원문",reviewCover2:"후기 커버 다크",review2:"후기 본문 매거진 인용",beforeAfter:"비포 애프터 변화 몸 기록 다이어트",summary:"이벤트 요약 숫자 혜택",coupon:"쿠폰 체험권 할인 무료",price:"가격 가격표 회원권 요금",rings:"챌린지 출석 진행률 링",dday:"디데이 카운트다운 마감 오픈",notice:"공지 휴관 운영시간 안내 명절",schedule:"시간표 GX 수업 요가 필라테스",faq:"질문 FAQ 문의 처음",facility:"시설 공간 존 안내 오리엔테이션",coach:"코치 트레이너 소개 강사",team:"코치진 트레이너 팀 라인업",routine:"루틴 운동 순서 세트 상체 하체 바디맵",tips:"꿀팁 정보 카드뉴스 방법 안내 시리즈",mono:"모노 흑백 컨디션 링",muscle:"근육 부위 PT 바디맵 앱",lift:"GYM TIME 짐타임 캠페인 기구",move:"MOVE 무브 캠페인 인물",fog:"포그 티저 오픈 유리",rhythm:"리듬 타이포 저장",quote:"한 문장 명언 슬로건 한마디",wideReview:"가로 후기 블로그 썸네일",wideInfo:"가로 혜택 TV",widePrice:"가로 가격표 TV",wideNotice:"가로 공지 TV 키오스크",wideBold:"가로 캠페인 유튜브",xbanner:"X배너 입구 배너 인쇄",xbannerBold:"X배너 캠페인 인쇄"};
+const norm=s=>String(s||"").toLowerCase().replace(/\s+/g,"");
+function matchQ(k,q){if(!q)return true;const hay=norm(T[k].n+T[k].d+(ALIAS[k]||"")+((CATS.find(c=>c[0]===T[k].cat)||[])[1]||""));return norm(q).split(/[,·]/).filter(Boolean).every(w=>hay.includes(w));}
+let gIO=null,gDirty=new Set();
+function thumbHTML(k,f,tw,sc){return `<button class="thumb" type="button" data-k="${k}" aria-pressed="${k===S.tpl}"><div class="box" style="width:${Math.round(tw)}px;height:${Math.round(f.h*sc)}px" data-sc="${sc}"></div><div><span class="tn">${esc(T[k].n)}<span class="bd${T[k].m==="bold"?" b":""}">${T[k].m==="bold"?"DARK":"LIGHT"}</span></span><small>${esc(T[k].d)}</small></div></button>`;}
+function paintThumb(b){const k=b.dataset.k,box=b.querySelector(".box");box.innerHTML=poster(k,S.fmt);box.firstChild.style.transform=`scale(${box.dataset.sc})`;b.dataset.painted="1";gDirty.delete(k);}
 function renderGallery(){if($("#tab-gallery").hidden)return;
- const f=FORMATS[S.fmt],sh=f.s,inShape=ORDER.filter(k=>shapeOf(k)===sh);
+ const f=FORMATS[S.fmt],sh=f.s,inShape=ORDER.filter(k=>shapeOf(k)===sh),q=($("#tplSearch").value||"").trim();
  const counts={all:inShape.length};inShape.forEach(k=>counts[T[k].cat]=(counts[T[k].cat]||0)+1);
  if(S.cat!=="all"&&!counts[S.cat])S.cat="all";
- $("#cats").innerHTML=CATS.filter(([k])=>counts[k]).map(([k,n])=>`<button type="button" data-v="${k}" aria-pressed="${k===S.cat}">${n} ${counts[k]}</button>`).join("");
- const list=inShape.filter(k=>S.cat==="all"||T[k].cat===S.cat),box=$("#thumbs"),tw=Math.max(120,(box.clientWidth-12)/2||160),sc=tw/f.w;
- $("#galInfo").textContent=`${f.n} 포맷 · ${SHAPE_N[sh]} 템플릿 ${inShape.length}개`;
- box.innerHTML=list.map(k=>`<button class="thumb" type="button" data-k="${k}" aria-pressed="${k===S.tpl}"><div class="box" style="width:${Math.round(tw)}px;height:${Math.round(f.h*sc)}px">${poster(k,S.fmt)}</div><div><span class="tn">${esc(T[k].n)}<span class="bd${T[k].m==="bold"?" b":""}">${T[k].m==="bold"?"DARK":"LIGHT"}</span></span><small>${esc(T[k].d)}</small></div></button>`).join("");
- box.querySelectorAll(".pc").forEach(p=>p.style.transform=`scale(${sc})`);}
-$("#cats").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.cat=b.dataset.v;renderGallery();});
-$("#thumbs").addEventListener("click",e=>{const b=e.target.closest(".thumb");if(!b)return;S.tpl=b.dataset.k;S.last[shapeOf(S.tpl)]=S.tpl;$$("#thumbs .thumb").forEach(x=>x.setAttribute("aria-pressed",x===b));afterChange({fields:true});});
+ $("#cats").innerHTML=CATS.filter(([k])=>counts[k]).map(([k,n])=>`<button type="button" data-v="${k}" aria-pressed="${k===S.cat&&!q}">${n} <small>${counts[k]}</small></button>`).join("");
+ const box=$("#thumbs"),tw=Math.max(110,(box.clientWidth-12)/2||160),sc=tw/f.w;
+ let html="";
+ if(q){const L=inShape.filter(k=>matchQ(k,q));$("#galInfo").textContent=L.length?`"${q}" 검색 결과 ${L.length}개`:`"${q}"에 맞는 템플릿이 없어요`;html=L.map(k=>thumbHTML(k,f,tw,sc)).join("");}
+ else{$("#galInfo").textContent=`${f.n} · ${SHAPE_N[sh]} 템플릿 ${inShape.length}개`;
+  const rec=RECENT.filter(k=>T[k]&&shapeOf(k)===sh).slice(0,4);
+  if(S.cat==="all"&&rec.length>1)html+=`<h3 class="gh">최근 사용</h3>`+rec.map(k=>thumbHTML(k,f,tw,sc)).join("");
+  CATS.filter(([c])=>c!=="all"&&(S.cat==="all"||S.cat===c)).forEach(([c,n])=>{const L=inShape.filter(k=>T[k].cat===c);if(!L.length)return;if(S.cat==="all")html+=`<h3 class="gh">${n}</h3>`;html+=L.map(k=>thumbHTML(k,f,tw,sc)).join("");});}
+ box.innerHTML=html;
+ if(gIO)gIO.disconnect();
+ if("IntersectionObserver" in window){gIO=new IntersectionObserver(es=>es.forEach(e=>{const b=e.target;b.classList.toggle("vis",e.isIntersecting);if(e.isIntersecting&&(!b.dataset.painted||gDirty.has(b.dataset.k)))paintThumb(b);}),{rootMargin:"300px 0px"});box.querySelectorAll(".thumb").forEach(b=>gIO.observe(b));}
+ else box.querySelectorAll(".thumb").forEach(paintThumb);}
+// 내용만 바뀌었을 때: 보이는 썸네일만 다시 그리고 나머지는 보일 때 그려요
+function refreshThumbs(){if($("#tab-gallery").hidden)return;$$("#thumbs .thumb").forEach(b=>{gDirty.add(b.dataset.k);if(b.classList.contains("vis"))paintThumb(b);});}
+$("#cats").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.cat=b.dataset.v;$("#tplSearch").value="";$("#tplClear").hidden=true;renderGallery();});
+let sq;$("#tplSearch").addEventListener("input",()=>{$("#tplClear").hidden=!$("#tplSearch").value;clearTimeout(sq);sq=setTimeout(renderGallery,120);});
+$("#tplClear").addEventListener("click",()=>{$("#tplSearch").value="";$("#tplClear").hidden=true;renderGallery();$("#tplSearch").focus();});
+$("#thumbs").addEventListener("click",e=>{const b=e.target.closest(".thumb");if(!b)return;S.tpl=b.dataset.k;S.last[shapeOf(S.tpl)]=S.tpl;addRecent(S.tpl);$$("#thumbs .thumb").forEach(x=>x.setAttribute("aria-pressed",x.dataset.k===S.tpl));afterChange({fields:true,noGallery:true});if(isNarrow())window.scrollTo({top:0,behavior:"smooth"});});
 $("#toEdit").addEventListener("click",()=>selectTab("edit"));
 $("#toGallery").addEventListener("click",()=>selectTab("gallery"));
 
-/* ---------- tabs ---------- */
-function selectTab(id){$$(".tabs button").forEach(b=>{const on=b.dataset.tab===id;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});$$(".tabpanel").forEach(p=>p.hidden=p.id!=="tab-"+id);if(id==="gallery")renderGallery();}
+/* ---------- tabs (위 탭 + 휴대폰 아래 탭바 공용) ---------- */
+const isNarrow=()=>window.innerWidth<900;
+// 휴대폰: 위에 고정된 미리보기 바로 아래로 패널 시작점을 맞춰요
+function panelTop(){if(!isNarrow())return;requestAnimationFrame(()=>{const p=$(".panel"),st=$(".stage");if(!p)return;const y=p.getBoundingClientRect().top+window.scrollY-(st?st.offsetHeight:0)-6;window.scrollTo({top:Math.max(0,y),behavior:"smooth"});});}
+function selectTab(id){$$(".tabs button").forEach(b=>{const on=b.dataset.tab===id;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;});
+ $$("#bnav button[data-tab]").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===id?"page":"false"));
+ $$(".tabpanel").forEach(p=>p.hidden=p.id!=="tab-"+id);document.body.dataset.tab=id;
+ if(id==="gallery")renderGallery();if(isNarrow()&&id!=="reels")render();if(typeof onTab==="function")onTab(id);}
 $(".tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)selectTab(b.dataset.tab);});
+$("#bnav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.tab){selectTab(b.dataset.tab);panelTop();}else if(b.id==="bnSave")(document.body.dataset.tab==="reels"?$("#rlMp4"):$("#saveBtn")).click();});
 $(".tabs").addEventListener("keydown",e=>{if(!["ArrowLeft","ArrowRight"].includes(e.key))return;const bs=$$(".tabs button"),i=bs.findIndex(b=>b.getAttribute("aria-selected")==="true"),n=bs[(i+(e.key==="ArrowRight"?1:bs.length-1))%bs.length];selectTab(n.dataset.tab);n.focus();});
 
 /* ---------- editor ---------- */
@@ -260,6 +288,9 @@ const MUSCLES=["어깨","가슴","등","삼두","이두","복근","하체"];
 function buildFields(){edTpl=S.tpl;const keys=S.all?ALLKEYS:(USES[S.tpl]||[]);const y=$("#fields").scrollTop;
  $("#edName").textContent=T[S.tpl].n;$("#edCount").textContent=S.all?`모든 항목 ${keys.length}개`:`이 템플릿에 쓰는 항목 ${keys.length}개 · 미리보기 순서`;
  $("#fields").innerHTML=keys.map(fieldHTML).join("");$("#fields").scrollTop=y;
+ // 항목 바로가기: 누르면 그 칸으로 이동
+ const lbOf=k=>String((LBL[S.tpl]&&LBL[S.tpl][k])||F[k].l).replace(/\s*\(.*\)\s*$/,"");
+ $("#jump").innerHTML=keys.map(k=>`<button type="button" data-jk="${k}">${esc(lbOf(k))}</button>`).join("");
  const ex=(USES[S.tpl]||[]).some(k=>F[k].t!=="photo"&&isSample(k));$("#sampleNote").textContent=ex?"처음 내용은 예시예요. 실제 정보로 바꿔 주세요.":"";}
 function shownNotes(){$$("#fields .fld").forEach(fl=>{const k=fl.dataset.fk,f=F[k];if(!f||(f.t!=="list"&&f.t!=="strs"))return;
  const ids=new Set([...$("#fit").querySelectorAll(`[data-f="${k}"][data-i]`)].map(e=>e.dataset.i)),n=(cv(S.tpl)[k]||[]).length;
@@ -307,11 +338,14 @@ $("#fields").addEventListener("change",async e=>{const el=e.target;
 $("#allFields").addEventListener("change",e=>{S.all=e.target.checked;buildFields();});
 
 /* 미리보기를 누르면 그 칸으로 */
-function goField(k,i){if(!F[k])return;selectTab("edit");if(!(USES[S.tpl]||[]).includes(k)&&!S.all){S.all=true;syncControls();buildFields();}
- const fl=$(`#fields .fld[data-fk="${k}"]`);if(!fl)return;fl.scrollIntoView({block:"center",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+function goField(k,i){if(!F[k])return;const wasEdit=!$("#tab-edit").hidden;selectTab("edit");if(!(USES[S.tpl]||[]).includes(k)&&!S.all){S.all=true;syncControls();buildFields();}
+ const fl=$(`#fields .fld[data-fk="${k}"]`);if(!fl)return;const bh=matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth";if(isNarrow()){const st=$(".stage");window.scrollTo({top:Math.max(0,fl.getBoundingClientRect().top+window.scrollY-(st?st.offsetHeight:0)-10),behavior:bh});}else fl.scrollIntoView({block:"center",behavior:bh});
  fl.classList.remove("flash");void fl.offsetWidth;fl.classList.add("flash");
  const el=(i!=null&&fl.querySelector(`[data-i="${i}"]:is(input,textarea)`))||fl.querySelector("input[type=text],input[type=url],textarea");if(el)el.focus({preventScroll:true});}
 $("#fit").addEventListener("click",e=>{const el=e.target.closest("[data-f]");if(el)goField(el.dataset.f,el.dataset.i);});
+$("#jump").addEventListener("click",e=>{const b=e.target.closest("button[data-jk]");if(b)goField(b.dataset.jk);});
+$("#fields").addEventListener("focusin",e=>{const fl=e.target.closest(".fld");if(!fl)return;$$("#jump button").forEach(b=>{const on=b.dataset.jk===fl.dataset.fk;b.classList.toggle("on",on);if(on)b.scrollIntoView({block:"nearest",inline:"nearest"});});});
+$("#pvToggle").addEventListener("click",()=>{const on=document.body.classList.toggle("pvbig");$("#pvToggle").setAttribute("aria-pressed",on);$("#pvToggle").textContent=on?"작게":"크게";render();});
 
 /* ---------- photos ---------- */
 /* 사진 저장: 누끼(투명 배경)는 WebP로 가볍게. 브라우저의 CSS 이미지 길이 제한(약 2MB)을 넘지 않도록 필요하면 크기를 줄여요 */
@@ -476,6 +510,7 @@ $("#copyBtn").addEventListener("click",async()=>{const V=cv(S.tpl),t=(USES[S.tpl
 /* ---------- init ---------- */
 (function injectAssets(){const st=document.createElement("style");st.textContent=`:root{--defcut:url("${ASSET.cut}");--defphoto:url("${ASSET.photo}");--logo:url("${ASSET.logo}");--logow:url("${ASSET.logow}")}`;document.head.appendChild(st);})();
 PLATFORM.init();aiState();
+//@@REELS
 (async function boot(){let restored=false;
  try{const a=await DB.get("autosave");if(a&&a.snap){await applySnap(a.snap,a.photos);restored=true;}}catch(e){canStore=false;}
  syncControls();buildFields();selectTab(restored?"edit":"gallery");render();commitNow();
